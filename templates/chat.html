@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat</title>
+</head>
+<body>
+    <h1>Общий чат</h1>
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>
+                    <b>{{ message.sender_name }}</b>: {{ message.text }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Сообщений пока нет.</p>
+    {% endif %}
+
+    <p><a href="/">На главную</a></p>
+</body>
+</html>
