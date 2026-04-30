@@ -6,16 +6,19 @@
 </head>
 <body>
     <h1>Team-Chat работает</h1>
-    <h2>пользователи</h2>
-    {% if users %}
-        <ul>
-            {% for user in users %}
-                <li>{{ user.login }} — {{ user.email }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Пользователей пока нет.</p>
-    {% endif %}
-    <p><a href="/chat">Перейти в чат</a></p>
+    <h2>Войти в чат</h2>
+    <form action="/chat/1/" method="get" id="chatForm">
+        <input type="text" name="username" placeholder="Ваше имя" required>
+        <button type="submit">Войти в чат</button>
+    </form>
 </body>
+<script>
+    document.getElementById('chatForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        let username = document.querySelector('input[name="username"]').value;
+        if (username.trim()) {
+            window.location.href = '/chat/1/' + encodeURIComponent(username);
+        }
+    });
+</script>
 </html>

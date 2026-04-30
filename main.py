@@ -1,10 +1,13 @@
 from flask import Flask, render_template
 from data import db_session
+from chat.chat_work import chat_bp
 from data.users import User
 from data.messages import Message
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'my-super-secretkey_123'
+
+app.register_blueprint(chat_bp)
 
 
 @app.route('/')
@@ -13,14 +16,6 @@ def index():
     db_sess = db_session.create_session()
     users = db_sess.query(User).all()
     return render_template('index.html', users=users)
-
-
-@app.route('/chat')
-def chat():
-    # страница чата - пока что все сообщения в куче - общий чат
-    db_sess = db_session.create_session()
-    messages = db_sess.query(Message).all()
-    return render_template('chat.html', messages=messages)
 
 
 def main():
