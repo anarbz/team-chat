@@ -1,27 +1,81 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for
 from data import db_session
 from chat.chat_work import chat_bp
 from data.users import User
-from data.messages import Message
+from data.chats import Chat
+from data.chat_members import ChatMember
+import os
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'my-super-secretkey_123'
-
 app.register_blueprint(chat_bp)
 
 
-@app.route('/')
-def index():
-    # основная стрница - вывод всех пользователей из бд
+def create_chat_with_id(chat_id, title, is_group=True):
+    """Создаёт чат с заданным id, если его нет. Возвращает id чата."""
     db_sess = db_session.create_session()
-    users = db_sess.query(User).all()
-    return render_template('index.html', users=users)
+    existing = db_sess.query(Chat).filter(Chat.id == chat_id).first()
+    if existing:
+        cid = existing.id
+        db_sess.close()
+        return cid
 
+    chat = Chat(id=chat_id, title=title, is_group=is_group, messages_db_path="")
+    db_sess.add(chat)
+    db_sess.commit()
+
+    db_dir = "db/chats"
+    os.makedirs(db_dir, exist_ok=True)
+    db_path = os.path.join(db_dir, f"chat_{chat.id}.db")
+    chat.messages_db_path = db_path
+    db_sess.commit()
+
+    from chat.chat_service import init_chat_messages_db
+    init_chat_messages_db(db_path)
+    db_sess.close()
+    return chat.id
+
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        chat_id_str = request.form.get('chat_id', '').strip()
+        if not username or not chat_id_str:
+            return "Имя и ID чата обязательны", 400
+        try:
+            chat_id = int(chat_id_str)
+        except ValueError:
+            return "ID чата должен быть числом", 400
+
+        db_sess = db_session.create_session()
+
+        user = db_sess.query(User).filter(User.login == username).first()
+        if not user:
+            user = User(login=username)
+            db_sess.add(user)
+            db_sess.commit()
+
+        chat_id = create_chat_with_id(chat_id, title=f"Chat {chat_id}", is_group=True)
+
+        membership = db_sess.query(ChatMember).filter(
+            ChatMember.chat_id == chat_id,
+            ChatMember.user_id == user.id
+        ).first()
+        if not membership:
+            member = ChatMember(chat_id=chat_id, user_id=user.id)
+            db_sess.add(member)
+            db_sess.commit()
+
+        db_sess.close()
+        return redirect(url_for('chat.chat', chat_id=chat_id, username=username))
+
+    return render_template('index.html')
 
 def main():
     db_session.global_init("db/team_chat.db")
-    app.run()
-
+    app.run(debug=True)
 
 if __name__ == '__main__':
     main()

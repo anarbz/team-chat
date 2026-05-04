@@ -5,20 +5,12 @@
     <title>t-chat</title>
 </head>
 <body>
-    <h1>Team-Chat работает</h1>
+    <h1>Team-Chat</h1>
     <h2>Войти в чат</h2>
-    <form action="/chat/1/" method="get" id="chatForm">
+    <form method="post">
         <input type="text" name="username" placeholder="Ваше имя" required>
-        <button type="submit">Войти в чат</button>
+        <input type="number" name="chat_id" placeholder="ID чата" required>
+        <button type="submit">Войти или создать чат</button>
     </form>
 </body>
-<script>
-    document.getElementById('chatForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        let username = document.querySelector('input[name="username"]').value;
-        if (username.trim()) {
-            window.location.href = '/chat/1/' + encodeURIComponent(username);
-        }
-    });
-</script>
 </html>
