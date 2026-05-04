@@ -24,9 +24,7 @@ def chat(chat_id, username):
         ).first()
 
         if not member:
-            new_member = ChatMember(chat_id=chat_id, user_id=user.id)
-            db_sess.add(new_member)
-            db_sess.commit()
+            abort(403, description="Вы не являетесь участником этого чата")
 
         chat = db_sess.query(Chat).filter(Chat.id == chat_id).first()
         if not chat:
