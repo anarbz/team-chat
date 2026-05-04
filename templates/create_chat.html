@@ -3,16 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <title>Создать чат</title>
+    <style>
+        .member-row { margin: 5px 0; }
+        .member-row input { width: 200px; }
+        .error { color: red; }
+    </style>
+    <script>
+        function addMemberRow() {
+            const container = document.getElementById('members-container');
+            const div = document.createElement('div');
+            div.className = 'member-row';
+            div.innerHTML = '<input type="text" name="logins" placeholder="Логин"> <button type="button" onclick="this.parentElement.remove()">Удалить</button>';
+            container.appendChild(div);
+        }
+    </script>
 </head>
 <body>
     <h1>Создать новый чат</h1>
+    {% if errors %}
+        <div class="error">
+            <strong>Ошибки:</strong><br>
+            {% for err in errors %}
+                {{ err }}<br>
+            {% endfor %}
+        </div>
+    {% endif %}
     <form method="post">
         <label>Название чата:</label>
-        <input type="text" name="title" required><br>
-        <label>Участники (логины через запятую):</label>
-        <input type="text" name="members" placeholder="" required><br>
-        <button type="submit">Создать</button>
+        <input type="text" name="title" required><br><br>
+
+        <label>Участники (логины):</label><br>
+        <div id="members-container">
+            <div class="member-row">
+                <input type="text" name="logins" placeholder="Логин">
+                <button type="button" onclick="this.parentElement.remove()">Удалить</button>
+            </div>
+        </div>
+        <button type="button" onclick="addMemberRow()">Добавить участника</button>
+        <br><br>
+        <button type="submit">Создать чат</button>
     </form>
+    <p>Следующий ID чата: <strong>{{ next_id }}</strong></p>
+    {% if success_message %}
+    <div style="color: green;">{{ success_message }}</div>
+{% endif %}
     <p><a href="/">На главную</a></p>
 </body>
 </html>

@@ -41,13 +41,11 @@ def init_chat_messages_db(db_path: str):
         conn.commit()
 
 
-def create_chat(title, is_group: bool = True) -> Chat:
-    # создаёт чат в основной БД и отдельный файл БД для его сообщений
+def create_chat(title, is_group: bool = True) -> int:
+    """Создаёт чат в основной БД и возвращает его id"""
     ensure_chat_db_dir()
-
     db_sess = db_session.create_session()
 
-    # создаём запись
     chat = Chat(
         title=title,
         is_group=is_group,
@@ -56,10 +54,12 @@ def create_chat(title, is_group: bool = True) -> Chat:
     db_sess.add(chat)
     db_sess.commit()
 
-    # путь к бд чата
     db_path = os.path.join(DB_DIR, f"chat_{chat.id}.db")
-    chat.messages_db_path = db_path
+    db_sess = db_session.create_session()
+    chat_to_update = db_sess.query(Chat).get(chat.id)
+    chat_to_update.messages_db_path = db_path
     db_sess.commit()
+    db_sess.close()
 
     init_chat_messages_db(db_path)
-    return chat
+    return chat.id

@@ -41,24 +41,27 @@ def create_chat_with_id(chat_id, title, is_group=True):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    success_message = None
+    error_message = None
+
     if request.method == 'POST':
         action = request.form.get('action')
         if action == 'register':
             login = request.form.get('reg_username', '').strip()
             password = request.form.get('reg_password', '').strip()
             if not login or not password:
-                return "Логин и пароль обязательны", 400
-            db_sess = db_session.create_session()
-            existing = db_sess.query(User).filter(User.login == login).first()
-            if existing:
+                error_message = "Логин и пароль обязательны"
+            else:
+                db_sess = db_session.create_session()
+                existing = db_sess.query(User).filter(User.login == login).first()
+                if existing:
+                    error_message = "Пользователь уже существует"
+                else:
+                    user = User(login=login, hashed_password=generate_password_hash(password))
+                    db_sess.add(user)
+                    db_sess.commit()
+                    success_message = f"Пользователь '{login}' успешно зарегистрирован! Теперь войдите в чат."
                 db_sess.close()
-                return "Пользователь уже существует", 400
-            user = User(login=login, hashed_password=generate_password_hash(password))
-            db_sess.add(user)
-            db_sess.commit()
-            db_sess.close()
-            return "Пользователь зарегистрирован. Теперь войдите в чат."
-
         elif action == 'login':
             username = request.form.get('username', '').strip()
             password = request.form.get('password', '').strip()
@@ -92,29 +95,40 @@ def index():
 @app.route('/create_chat', methods=['GET', 'POST'])
 def create_chat_route():
     db_sess = db_session.create_session()
+
+    last_chat = db_sess.query(Chat.id).order_by(Chat.id.desc()).first()
+    next_id = (last_chat[0] + 1) if last_chat else 1
+
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
-        members_str = request.form.get('members', '').strip()
-        if not title or not members_str:
-            return "Название и участники обязательны", 400
+        logins = request.form.getlist('logins')
+        logins = [login.strip() for login in logins if login.strip()]
 
-        logins = [login.strip() for login in members_str.split(',') if login.strip()]
-        if not logins:
-            return "Укажите хотя бы одного участника", 400
+        if not title or not logins:
+            errors = ["Название чата обязательно"] if not title else ["Укажите хотя бы одного участника"]
+            return render_template('create_chat.html', errors=errors, next_id=next_id)
 
         users = db_sess.query(User).filter(User.login.in_(logins)).all()
-        if len(users) != len(logins):
-            missing = set(logins) - {u.login for u in users}
-            return f"Пользователи не найдены: {', '.join(missing)}", 400
+        existing_logins = {u.login for u in users}
+        missing_logins = set(logins) - existing_logins
 
-        chat = create_chat(title, is_group=True)
+        if missing_logins:
+            errors = [f"Пользователь '{login}' не найден" for login in missing_logins]
+            return render_template('create_chat.html', errors=errors, next_id=next_id)
+
+        from chat.chat_service import create_chat
+        chat_id = create_chat(title, is_group=True)
         for user in users:
-            member = ChatMember(chat_id=chat.id, user_id=user.id)
+            member = ChatMember(chat_id=chat_id, user_id=user.id)
             db_sess.add(member)
         db_sess.commit()
-        return redirect(url_for('index'))
+        db_sess.close()
 
-    return render_template('create_chat.html')
+        success_message = f"Чат успешно создан! ID чата: {chat_id}"
+        return render_template('create_chat.html', success_message=success_message, next_id=chat_id + 1)
+
+    db_sess.close()
+    return render_template('create_chat.html', next_id=next_id)
 
 
 def main():
