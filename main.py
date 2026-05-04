@@ -14,31 +14,6 @@ app.config['SECRET_KEY'] = 'my-super-secretkey_123'
 app.register_blueprint(chat_bp)
 
 
-def create_chat_with_id(chat_id, title, is_group=True):
-    """Создаёт чат с заданным id, если его нет. Возвращает id чата."""
-    db_sess = db_session.create_session()
-    existing = db_sess.query(Chat).filter(Chat.id == chat_id).first()
-    if existing:
-        cid = existing.id
-        db_sess.close()
-        return cid
-
-    chat = Chat(id=chat_id, title=title, is_group=is_group, messages_db_path="")
-    db_sess.add(chat)
-    db_sess.commit()
-
-    db_dir = "db/chats"
-    os.makedirs(db_dir, exist_ok=True)
-    db_path = os.path.join(db_dir, f"chat_{chat.id}.db")
-    chat.messages_db_path = db_path
-    db_sess.commit()
-
-    from chat.chat_service import init_chat_messages_db
-    init_chat_messages_db(db_path)
-    db_sess.close()
-    return chat.id
-
-
 @app.route('/', methods=['GET', 'POST'])
 def index():
     success_message = None
