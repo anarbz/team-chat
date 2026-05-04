@@ -3,15 +3,16 @@ import datetime
 import sqlite3
 from data import db_session
 from data.users import User
+from data.chats import Chat
 from data.chat_members import ChatMember
-from chat.chat_service import get_chat_db_path
+import os
 
 chat_bp = Blueprint('chat', __name__)
+
 
 @chat_bp.route('/chat/<int:chat_id>/<username>', methods=['GET', 'POST'])
 def chat(chat_id, username):
     db_sess = db_session.create_session()
-
     try:
         user = db_sess.query(User).filter(User.login == username).first()
         if not user:
@@ -27,9 +28,13 @@ def chat(chat_id, username):
             db_sess.add(new_member)
             db_sess.commit()
 
-        db_path = get_chat_db_path(chat_id)
-        if not db_path:
+        chat = db_sess.query(Chat).filter(Chat.id == chat_id).first()
+        if not chat:
             abort(404, description="Чат не найден")
+
+        db_path = chat.messages_db_path
+        if not db_path or not os.path.exists(db_path):
+            abort(404, description="База сообщений чата не найдена")
 
         if request.method == 'POST':
             message_text = request.form.get('message', '').strip()
