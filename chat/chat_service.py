@@ -11,7 +11,10 @@ DB_DIR = "db/chats"
 def get_chat_by_id(chat_id) -> Chat | None:
     # возвращает чат по его id или None
     db_sess = db_session.create_session()
-    return db_sess.query(Chat).filter(Chat.id == chat_id).first()
+    try:
+        return db_sess.query(Chat).filter(Chat.id == chat_id).first()
+    finally:
+        db_sess.close()
 
 
 def get_chat_db_path(chat_id):
@@ -38,6 +41,7 @@ def init_chat_messages_db(db_path: str):
                 message TEXT NOT NULL,
                 time TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
         """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_time ON messages(time)")
         conn.commit()
 
 
@@ -45,21 +49,20 @@ def create_chat(title, is_group: bool = True) -> int:
     """Создаёт чат в основной БД и возвращает его id"""
     ensure_chat_db_dir()
     db_sess = db_session.create_session()
+    try:
+        chat = Chat(
+            title=title,
+            is_group=is_group,
+            messages_db_path=""
+        )
+        db_sess.add(chat)
+        db_sess.flush()
 
-    chat = Chat(
-        title=title,
-        is_group=is_group,
-        messages_db_path=""
-    )
-    db_sess.add(chat)
-    db_sess.commit()
+        db_path = os.path.join(DB_DIR, f"chat_{chat.id}.db")
+        chat.messages_db_path = db_path
+        db_sess.commit()
 
-    db_path = os.path.join(DB_DIR, f"chat_{chat.id}.db")
-    db_sess = db_session.create_session()
-    chat_to_update = db_sess.query(Chat).get(chat.id)
-    chat_to_update.messages_db_path = db_path
-    db_sess.commit()
-    db_sess.close()
-
-    init_chat_messages_db(db_path)
-    return chat.id
+        init_chat_messages_db(db_path)
+        return chat.id
+    finally:
+        db_sess.close()

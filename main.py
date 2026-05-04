@@ -53,15 +53,18 @@ def index():
                 error_message = "Логин и пароль обязательны"
             else:
                 db_sess = db_session.create_session()
-                existing = db_sess.query(User).filter(User.login == login).first()
-                if existing:
-                    error_message = "Пользователь уже существует"
-                else:
-                    user = User(login=login, hashed_password=generate_password_hash(password))
-                    db_sess.add(user)
-                    db_sess.commit()
-                    success_message = f"Пользователь '{login}' успешно зарегистрирован! Теперь войдите в чат."
-                db_sess.close()
+                try:
+                    existing = db_sess.query(User).filter(User.login == login).first()
+                    if existing:
+                        error_message = "Пользователь уже существует"
+                    else:
+                        user = User(login=login, hashed_password=generate_password_hash(password))
+                        db_sess.add(user)
+                        db_sess.commit()
+                        success_message = f"Пользователь '{login}' успешно зарегистрирован! Теперь войдите в чат."
+                finally:
+                    db_sess.close()
+
         elif action == 'login':
             username = request.form.get('username', '').strip()
             password = request.form.get('password', '').strip()
@@ -74,30 +77,34 @@ def index():
                 return "ID чата должен быть числом", 400
 
             db_sess = db_session.create_session()
-            user = db_sess.query(User).filter(User.login == username).first()
-            if not user or not check_password_hash(user.hashed_password, password):
-                db_sess.close()
-                return "Неверный логин или пароль", 403
+            try:
+                user = db_sess.query(User).filter(User.login == username).first()
+                if not user or not check_password_hash(user.hashed_password, password):
+                    return "Неверный логин или пароль", 403
 
-            membership = db_sess.query(ChatMember).filter(
-                ChatMember.chat_id == chat_id,
-                ChatMember.user_id == user.id
-            ).first()
-            db_sess.close()
+                membership = db_sess.query(ChatMember).filter(
+                    ChatMember.chat_id == chat_id,
+                    ChatMember.user_id == user.id
+                ).first()
+            finally:
+                db_sess.close()
+
             if not membership:
                 return "У вас нет доступа к этому чату", 403
 
             return redirect(url_for('chat.chat', chat_id=chat_id, username=username))
 
-    return render_template('index.html')
+    return render_template('index.html', success_message=success_message, error_message=error_message)
 
 
 @app.route('/create_chat', methods=['GET', 'POST'])
 def create_chat_route():
     db_sess = db_session.create_session()
-
-    last_chat = db_sess.query(Chat.id).order_by(Chat.id.desc()).first()
-    next_id = (last_chat[0] + 1) if last_chat else 1
+    try:
+        last_chat = db_sess.query(Chat.id).order_by(Chat.id.desc()).first()
+        next_id = (last_chat[0] + 1) if last_chat else 1
+    finally:
+        db_sess.close()
 
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
@@ -108,9 +115,13 @@ def create_chat_route():
             errors = ["Название чата обязательно"] if not title else ["Укажите хотя бы одного участника"]
             return render_template('create_chat.html', errors=errors, next_id=next_id)
 
-        users = db_sess.query(User).filter(User.login.in_(logins)).all()
-        existing_logins = {u.login for u in users}
-        missing_logins = set(logins) - existing_logins
+        db_sess = db_session.create_session()
+        try:
+            users = db_sess.query(User).filter(User.login.in_(logins)).all()
+            existing_logins = {u.login for u in users}
+            missing_logins = set(logins) - existing_logins
+        finally:
+            db_sess.close()
 
         if missing_logins:
             errors = [f"Пользователь '{login}' не найден" for login in missing_logins]
@@ -118,16 +129,26 @@ def create_chat_route():
 
         from chat.chat_service import create_chat
         chat_id = create_chat(title, is_group=True)
-        for user in users:
-            member = ChatMember(chat_id=chat_id, user_id=user.id)
-            db_sess.add(member)
-        db_sess.commit()
-        db_sess.close()
+
+        db_sess = db_session.create_session()
+        try:
+            for user in users:
+                member = ChatMember(chat_id=chat_id, user_id=user.id)
+                db_sess.add(member)
+            db_sess.commit()
+        finally:
+            db_sess.close()
 
         success_message = f"Чат успешно создан! ID чата: {chat_id}"
-        return render_template('create_chat.html', success_message=success_message, next_id=chat_id + 1)
+        db_sess2 = db_session.create_session()
+        try:
+            last = db_sess2.query(Chat.id).order_by(Chat.id.desc()).first()
+            next_id = (last[0] + 1) if last else 1
+        finally:
+            db_sess2.close()
 
-    db_sess.close()
+        return render_template('create_chat.html', success_message=success_message, next_id=next_id)
+
     return render_template('create_chat.html', next_id=next_id)
 
 
