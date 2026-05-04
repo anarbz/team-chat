@@ -4,6 +4,8 @@ from chat.chat_work import chat_bp
 from data.users import User
 from data.chats import Chat
 from data.chat_members import ChatMember
+from chat.chat_service import create_chat
+
 import os
 
 
@@ -63,15 +65,43 @@ def index():
             ChatMember.chat_id == chat_id,
             ChatMember.user_id == user.id
         ).first()
+        db_sess.close()
         if not membership:
-            member = ChatMember(chat_id=chat_id, user_id=user.id)
-            db_sess.add(member)
-            db_sess.commit()
+            return "У вас нет доступа к этому чату", 403
 
         db_sess.close()
         return redirect(url_for('chat.chat', chat_id=chat_id, username=username))
 
     return render_template('index.html')
+
+
+@app.route('/create_chat', methods=['GET', 'POST'])
+def create_chat_route():
+    db_sess = db_session.create_session()
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        members_str = request.form.get('members', '').strip()
+        if not title or not members_str:
+            return "Название и участники обязательны", 400
+
+        logins = [login.strip() for login in members_str.split(',') if login.strip()]
+        if not logins:
+            return "Укажите хотя бы одного участника", 400
+
+        users = db_sess.query(User).filter(User.login.in_(logins)).all()
+        if len(users) != len(logins):
+            missing = set(logins) - {u.login for u in users}
+            return f"Пользователи не найдены: {', '.join(missing)}", 400
+
+        chat = create_chat(title, is_group=True)
+        for user in users:
+            member = ChatMember(chat_id=chat.id, user_id=user.id)
+            db_sess.add(member)
+        db_sess.commit()
+        return redirect(url_for('index'))
+
+    return render_template('create_chat.html')
+
 
 def main():
     db_session.global_init("db/team_chat.db")

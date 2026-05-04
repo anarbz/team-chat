@@ -12,12 +12,18 @@ chat_bp = Blueprint('chat', __name__)
 def chat(chat_id, username):
     db_sess = db_session.create_session()
 
-    # Находим пользователя
     user = db_sess.query(User).filter(User.login == username).first()
     if not user:
         return redirect(url_for('index'))
 
-    # Проверяем членство в чате (и добавляем, если нужно)
+    member = db_sess.query(ChatMember).filter(
+        ChatMember.chat_id == chat_id,
+        ChatMember.user_id == user.id
+    ).first()
+    if not member:
+        db_sess.close()
+        abort(403, description="У вас нет доступа к этому чату")
+
     member = db_sess.query(ChatMember).filter(
         ChatMember.chat_id == chat_id,
         ChatMember.user_id == user.id
@@ -27,13 +33,11 @@ def chat(chat_id, username):
         db_sess.add(new_member)
         db_sess.commit()
 
-    # Получаем путь к БД сообщений чата
     db_path = get_chat_db_path(chat_id)
     if not db_path:
         db_sess.close()
         abort(404, description="Чат не найден")
 
-    # Отправка сообщения
     if request.method == 'POST':
         message_text = request.form.get('message', '').strip()
         if message_text:
@@ -46,13 +50,11 @@ def chat(chat_id, username):
                 conn.commit()
         return redirect(url_for('chat.chat', chat_id=chat_id, username=username))
 
-    # Получение сообщений
     with sqlite3.connect(db_path) as conn:
         conn.row_factory = sqlite3.Row
         cur = conn.execute("SELECT id_message, sender_id, message, time FROM messages ORDER BY time")
         messages_rows = cur.fetchall()
 
-    # Подтягиваем имена отправителей из основной БД
     sender_ids = {row['sender_id'] for row in messages_rows}
     users_map = {}
     if sender_ids:
