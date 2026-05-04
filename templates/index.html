@@ -6,11 +6,20 @@
 </head>
 <body>
     <h1>Team-Chat</h1>
-    <h2>Войти в чат</h2>
-    <form method="post">
-        <input type="text" name="username" placeholder="Ваше имя" required>
+    <form method="post" action="/" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 20px;">
+        <h3>Вход в чат</h3>
+        <input type="text" name="username" placeholder="Логин" required>
+        <input type="password" name="password" placeholder="Пароль" required>
         <input type="number" name="chat_id" placeholder="ID чата" required>
-        <button type="submit">Войти или создать чат</button>
+        <button type="submit" name="action" value="login">Войти</button>
+    </form>
+
+    <!-- ВРЕМЕННО -->
+    <form method="post" action="/" style="border: 1px solid #ccc; padding: 10px;">
+        <h3>Регистрация нового пользователя</h3>
+        <input type="text" name="reg_username" placeholder="Логин" required>
+        <input type="password" name="reg_password" placeholder="Пароль" required>
+        <button type="submit" name="action" value="register">Зарегистрироваться</button>
     </form>
     <p><a href="/create_chat">Создать новый чат</a></p>
 </body>

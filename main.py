@@ -5,7 +5,7 @@ from data.users import User
 from data.chats import Chat
 from data.chat_members import ChatMember
 from chat.chat_service import create_chat
-
+from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
 
@@ -42,35 +42,49 @@ def create_chat_with_id(chat_id, title, is_group=True):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        chat_id_str = request.form.get('chat_id', '').strip()
-        if not username or not chat_id_str:
-            return "Имя и ID чата обязательны", 400
-        try:
-            chat_id = int(chat_id_str)
-        except ValueError:
-            return "ID чата должен быть числом", 400
-
-        db_sess = db_session.create_session()
-
-        user = db_sess.query(User).filter(User.login == username).first()
-        if not user:
-            user = User(login=username)
+        action = request.form.get('action')
+        if action == 'register':
+            login = request.form.get('reg_username', '').strip()
+            password = request.form.get('reg_password', '').strip()
+            if not login or not password:
+                return "Логин и пароль обязательны", 400
+            db_sess = db_session.create_session()
+            existing = db_sess.query(User).filter(User.login == login).first()
+            if existing:
+                db_sess.close()
+                return "Пользователь уже существует", 400
+            user = User(login=login, hashed_password=generate_password_hash(password))
             db_sess.add(user)
             db_sess.commit()
+            db_sess.close()
+            return "Пользователь зарегистрирован. Теперь войдите в чат."
 
-        chat_id = create_chat_with_id(chat_id, title=f"Chat {chat_id}", is_group=True)
+        elif action == 'login':
+            username = request.form.get('username', '').strip()
+            password = request.form.get('password', '').strip()
+            chat_id_str = request.form.get('chat_id', '').strip()
+            if not username or not password or not chat_id_str:
+                return "Все поля обязательны", 400
+            try:
+                chat_id = int(chat_id_str)
+            except ValueError:
+                return "ID чата должен быть числом", 400
 
-        membership = db_sess.query(ChatMember).filter(
-            ChatMember.chat_id == chat_id,
-            ChatMember.user_id == user.id
-        ).first()
-        db_sess.close()
-        if not membership:
-            return "У вас нет доступа к этому чату", 403
+            db_sess = db_session.create_session()
+            user = db_sess.query(User).filter(User.login == username).first()
+            if not user or not check_password_hash(user.hashed_password, password):
+                db_sess.close()
+                return "Неверный логин или пароль", 403
 
-        db_sess.close()
-        return redirect(url_for('chat.chat', chat_id=chat_id, username=username))
+            membership = db_sess.query(ChatMember).filter(
+                ChatMember.chat_id == chat_id,
+                ChatMember.user_id == user.id
+            ).first()
+            db_sess.close()
+            if not membership:
+                return "У вас нет доступа к этому чату", 403
+
+            return redirect(url_for('chat.chat', chat_id=chat_id, username=username))
 
     return render_template('index.html')
 
