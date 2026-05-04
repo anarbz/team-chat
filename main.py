@@ -99,13 +99,6 @@ def index():
 
 @app.route('/create_chat', methods=['GET', 'POST'])
 def create_chat_route():
-    db_sess = db_session.create_session()
-    try:
-        last_chat = db_sess.query(Chat.id).order_by(Chat.id.desc()).first()
-        next_id = (last_chat[0] + 1) if last_chat else 1
-    finally:
-        db_sess.close()
-
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         logins = request.form.getlist('logins')
@@ -113,7 +106,7 @@ def create_chat_route():
 
         if not title or not logins:
             errors = ["Название чата обязательно"] if not title else ["Укажите хотя бы одного участника"]
-            return render_template('create_chat.html', errors=errors, next_id=next_id)
+            return render_template('create_chat.html', errors=errors)
 
         db_sess = db_session.create_session()
         try:
@@ -125,7 +118,7 @@ def create_chat_route():
 
         if missing_logins:
             errors = [f"Пользователь '{login}' не найден" for login in missing_logins]
-            return render_template('create_chat.html', errors=errors, next_id=next_id)
+            return render_template('create_chat.html', errors=errors)
 
         from chat.chat_service import create_chat
         chat_id = create_chat(title, is_group=True)
@@ -140,16 +133,9 @@ def create_chat_route():
             db_sess.close()
 
         success_message = f"Чат успешно создан! ID чата: {chat_id}"
-        db_sess2 = db_session.create_session()
-        try:
-            last = db_sess2.query(Chat.id).order_by(Chat.id.desc()).first()
-            next_id = (last[0] + 1) if last else 1
-        finally:
-            db_sess2.close()
+        return render_template('create_chat.html', success_message=success_message)
 
-        return render_template('create_chat.html', success_message=success_message, next_id=next_id)
-
-    return render_template('create_chat.html', next_id=next_id)
+    return render_template('create_chat.html')
 
 
 def main():

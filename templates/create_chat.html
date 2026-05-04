@@ -43,10 +43,10 @@
         <br><br>
         <button type="submit">Создать чат</button>
     </form>
-    <p>Следующий ID чата: <strong>{{ next_id }}</strong></p>
+
     {% if success_message %}
-    <div style="color: green;">{{ success_message }}</div>
-{% endif %}
+        <div style="color: green;">{{ success_message }}</div>
+    {% endif %}
     <p><a href="/">На главную</a></p>
 </body>
 </html>
