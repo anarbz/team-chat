@@ -5,17 +5,30 @@
     <title>t-chat</title>
 </head>
 <body>
-    <h1>Team-Chat работает</h1>
-    <h2>пользователи</h2>
-    {% if users %}
-        <ul>
-            {% for user in users %}
-                <li>{{ user.login }} — {{ user.email }}</li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>Пользователей пока нет.</p>
-    {% endif %}
-    <p><a href="/chat">Перейти в чат</a></p>
+    <h1>Team-Chat</h1>
+    <form method="post" action="/" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 20px;">
+        <h3>Вход в чат</h3>
+        <input type="text" name="username" placeholder="Логин" required>
+        <input type="password" name="password" placeholder="Пароль" required>
+        <input type="number" name="chat_id" placeholder="ID чата" required>
+        <button type="submit" name="action" value="login">Войти</button>
+    </form>
+
+    <!-- ВРЕМЕННО -->
+    <form method="post" action="/" style="border: 1px solid #ccc; padding: 10px;">
+        <h3>Регистрация нового пользователя</h3>
+        <input type="text" name="reg_username" placeholder="Логин" required>
+        <input type="password" name="reg_password" placeholder="Пароль" required>
+        <button type="submit" name="action" value="register">Зарегистрироваться</button>
+    </form>
+
+    {% if success_message %}
+    <div style="color: green; margin: 10px 0;">{{ success_message }}</div>
+{% endif %}
+{% if error_message %}
+    <div style="color: red; margin: 10px 0;">{{ error_message }}</div>
+{% endif %}
+
+    <p><a href="/create_chat">Создать новый чат</a></p>
 </body>
 </html>

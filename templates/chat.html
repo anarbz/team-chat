@@ -2,22 +2,38 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Chat</title>
+    <title>Чат {{ chat_id }} - {{ username }}</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        .messages { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: scroll; margin-bottom: 20px; }
+        .message { margin-bottom: 8px; }
+        .user { font-weight: bold; color: #2c3e50; }
+        .time { font-size: 0.8em; color: #7f8c8d; margin-left: 10px; }
+        form { display: flex; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 8px; }
+        button { padding: 8px 16px; }
+    </style>
 </head>
 <body>
-    <h1>Общий чат</h1>
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li>
-                    <b>{{ message.sender_name }}</b>: {{ message.text }}
-                </li>
+    <h1>Чат: {{ chat_id }} (пользователь: {{ username }})</h1>
+    <div class="messages">
+        {% if messages %}
+            {% for msg in messages %}
+                <div class="message">
+                    <span class="user">{{ msg['user'] }}</span>
+                    <span class="time">{{ msg['time'] }}</span>
+                    <div class="text">{{ msg['message'] }}</div>
+                </div>
             {% endfor %}
-        </ul>
-    {% else %}
-        <p>Сообщений пока нет.</p>
-    {% endif %}
+        {% else %}
+            <p>Сообщений пока нет. Напишите первое!</p>
+        {% endif %}
+    </div>
 
+    <form method="POST">
+        <input type="text" name="message" placeholder="Введите сообщение..." autocomplete="off" required>
+        <button type="submit">Отправить</button>
+    </form>
     <p><a href="/">На главную</a></p>
 </body>
 </html>
