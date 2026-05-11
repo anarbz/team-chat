@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from data import db_session
 from data.users import User
 from data.chat_members import ChatMember
-from chat.chat_service import create_chat
+from services.chat_creation import create_chat
 
 dashboard_bp = Blueprint('dashboard', __name__, template_folder='../templates')
 
