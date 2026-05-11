@@ -26,11 +26,38 @@ def load_user(user_id):
     return db_sess.get(User, int(user_id))
 
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    db_sess = db_session.create_session()
-    users = db_sess.query(User).all()
-    return render_template('index.html', users=users, current_user=current_user)
+    login_form = LoginForm()
+    register_form = RegisterForm()
+
+    if request.method == 'POST' and 'login_submit' in request.form:
+        if login_form.validate_on_submit():
+            db_sess = db_session.create_session()
+            user = db_sess.query(User).filter(User.email == login_form.email.data).first()
+            if user and user.check_password(login_form.password.data):
+                login_user(user, remember=login_form.remember_me.data)
+                return redirect(url_for('dashboard'))
+            else:
+                message = 'Неправильный email или пароль'
+                return render_template('index.html', login_form=login_form, register_form=register_form,
+                                       message=message)
+
+    if request.method == 'POST' and 'register_submit' in request.form:
+        if register_form.validate_on_submit():
+            db_sess = db_session.create_session()
+            existing_user = db_sess.query(User).filter(User.email == register_form.email.data).first()
+            if existing_user:
+                return render_template('index.html', login_form=login_form, register_form=register_form,
+                                       reg_message='Пользователь с таким email уже существует')
+            user = User(login=register_form.login.data, email=register_form.email.data)
+            user.set_password(register_form.password.data)
+            db_sess.add(user)
+            db_sess.commit()
+            login_user(user, remember=False)
+            return redirect(url_for('dashboard'))
+
+    return render_template('index.html', login_form=login_form, register_form=register_form)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -60,8 +87,8 @@ def register():
 
         db_sess.add(user)
         db_sess.commit()
-
-        return redirect(url_for('login'))
+        login_user(user, remember=False)
+        return redirect(url_for('dashboard'))
 
     return render_template(
         'register.html',
@@ -82,7 +109,7 @@ def login():
 
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
-            return redirect(url_for('index'))
+            return redirect(url_for('dashboard'))
 
         return render_template(
             'login.html',
@@ -155,28 +182,33 @@ def create_chat_route():
             errors = [f"Пользователь '{login}' не найден" for login in missing_logins]
             return render_template('create_chat.html', errors=errors)
 
-        chat = create_chat(title, is_group=True)
+        chat_id = create_chat(title, is_group=True)
 
-        # Добавим самого создателя, если его логина нет в списке
         creator_already_added = current_user.login in existing_logins
         if not creator_already_added:
             users.append(current_user)
 
         for user in users:
             exists = db_sess.query(ChatMember).filter(
-                ChatMember.chat_id == chat.id,
+                ChatMember.chat_id == chat_id,
                 ChatMember.user_id == user.id
             ).first()
             if not exists:
-                member = ChatMember(chat_id=chat.id, user_id=user.id)
+                member = ChatMember(chat_id=chat_id, user_id=user.id)
                 db_sess.add(member)
 
         db_sess.commit()
 
-        success_message = f"Чат успешно создан! ID чата: {chat.id}"
+        success_message = f"Чат успешно создан! ID чата: {chat_id}"
         return render_template('create_chat.html', success_message=success_message)
 
     return render_template('create_chat.html')
+
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    return render_template('dashboard.html')
 
 
 def main():
