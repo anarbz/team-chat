@@ -1,52 +1,61 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Создать чат</title>
-    <style>
-        .member-row { margin: 5px 0; }
-        .member-row input { width: 200px; }
-        .error { color: red; }
-    </style>
-    <script>
-        function addMemberRow() {
-            const container = document.getElementById('members-container');
-            const div = document.createElement('div');
-            div.className = 'member-row';
-            div.innerHTML = '<input type="text" name="logins" placeholder="Логин"> <button type="button" onclick="this.parentElement.remove()">Удалить</button>';
-            container.appendChild(div);
-        }
-    </script>
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block content %}
     <h1>Создать новый чат</h1>
+
     {% if errors %}
-        <div class="error">
+        <div class="alert alert-danger" role="alert">
             <strong>Ошибки:</strong><br>
             {% for err in errors %}
                 {{ err }}<br>
             {% endfor %}
         </div>
     {% endif %}
-    <form method="post">
-        <label>Название чата:</label>
-        <input type="text" name="title" required><br><br>
 
-        <label>Участники (логины):</label><br>
+    <form method="post">
+        <label class="form-label">Название чата:</label>
+        <input class="form-control mb-3" type="text" name="title" required>
+
+        <label class="form-label">Участники (логины):</label><br>
         <div id="members-container">
-            <div class="member-row">
-                <input type="text" name="logins" placeholder="Логин">
-                <button type="button" onclick="this.parentElement.remove()">Удалить</button>
+            <div class="mb-2">
+                <input class="form-control" type="text" name="logins" placeholder="Логин">
+                <button class="btn btn-outline-secondary btn-sm mt-1"
+                        type="button"
+                        onclick="this.parentElement.remove()">
+                    Удалить
+                </button>
             </div>
         </div>
-        <button type="button" onclick="addMemberRow()">Добавить участника</button>
+
+        <button class="btn btn-secondary btn-sm mt-2"
+                type="button"
+                onclick="addMemberRow()">
+            Добавить участника
+        </button>
+
         <br><br>
-        <button type="submit">Создать чат</button>
+
+        <button class="btn btn-primary" type="submit">Создать чат</button>
     </form>
 
     {% if success_message %}
-        <div style="color: green;">{{ success_message }}</div>
+        <div class="alert alert-success mt-3" role="alert">
+            {{ success_message }}
+        </div>
     {% endif %}
-    <p><a href="/dashboard">На главную</a></p>
-</body>
-</html>
+
+    <p class="mt-3">
+        <a class="btn btn-outline-secondary" href="/dashboard">На главную</a>
+    </p>
+
+    <script>
+        function addMemberRow() {
+            const container = document.getElementById('members-container');
+            const div = document.createElement('div');
+            div.className = 'mb-2';
+            div.innerHTML = '<input class="form-control" type="text" name="logins" placeholder="Логин"> <button class="btn btn-outline-secondary btn-sm mt-1" type="button" onclick="this.parentElement.remove()">Удалить</button>';
+            container.appendChild(div);
+        }
+    </script>
+{% endblock %}
