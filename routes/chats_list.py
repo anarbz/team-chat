@@ -26,4 +26,4 @@ def chats():
         user_chats = []
     db_sess.close()
 
-    return render_template('chats.html', chats=user_chats)
+    return render_template('chats.html', chats=user_chats, title='Мои чаты')
