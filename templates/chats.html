@@ -22,10 +22,16 @@
                         {% endif %}
                     </div>
 
-                    <form method="post" action="/enter_chat">
-                        <input type="hidden" name="chat_id" value="{{ chat.id }}">
-                        <button type="submit" class="btn btn-outline-primary btn-sm">Открыть</button>
-                    </form>
+                    <div class="d-flex gap-2">
+                        <a href="/edit_chat/{{ chat.id }}" class="btn btn-outline-secondary btn-sm">
+                            Редактировать
+                        </a>
+
+                        <form method="post" action="/enter_chat">
+                            <input type="hidden" name="chat_id" value="{{ chat.id }}">
+                            <button type="submit" class="btn btn-outline-primary btn-sm">Открыть</button>
+                        </form>
+                    </div>
                 </div>
             {% endfor %}
         </div>

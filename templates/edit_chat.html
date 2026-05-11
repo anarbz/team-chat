@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Редактировать чат</h1>
+
+    {% if errors %}
+        <div class="alert alert-danger" role="alert">
+            <strong>Ошибки:</strong><br>
+            {% for error in errors %}
+                {{ error }}<br>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post">
+        <label class="form-label">Название чата:</label>
+        <input class="form-control mb-3"
+               type="text"
+               name="title"
+               value="{{ chat.title }}"
+               required>
+
+        <label class="form-label">Участники (логины):</label>
+
+        <div id="members-container">
+            {% for member in members %}
+                <div class="mb-2">
+                    <input class="form-control"
+                           type="text"
+                           name="logins"
+                           value="{{ member.login }}"
+                           placeholder="Логин">
+                    <button class="btn btn-outline-secondary btn-sm mt-1"
+                            type="button"
+                            onclick="this.parentElement.remove()">
+                        Удалить
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+
+        <button class="btn btn-secondary btn-sm mt-2"
+                type="button"
+                onclick="addMemberRow()">
+            Добавить участника
+        </button>
+
+        <br><br>
+
+        <button class="btn btn-primary" type="submit">
+            Сохранить
+        </button>
+
+        <a class="btn btn-outline-secondary" href="/chats">
+            Назад
+        </a>
+    </form>
+
+    <script>
+        function addMemberRow() {
+            const container = document.getElementById('members-container');
+            const div = document.createElement('div');
+            div.className = 'mb-2';
+            div.innerHTML = '<input class="form-control" type="text" name="logins" placeholder="Логин"> <button class="btn btn-outline-secondary btn-sm mt-1" type="button" onclick="this.parentElement.remove()">Удалить</button>';
+            container.appendChild(div);
+        }
+    </script>
+{% endblock %}
