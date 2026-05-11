@@ -103,3 +103,49 @@ def download_file(chat_id, attachment_id):
         return send_from_directory(directory, filename, as_attachment=True, download_name=file_name)
     finally:
         db_sess.close()
+
+
+@chat_bp.route('/chat/<int:chat_id>/edit/<int:message_id>', methods=['POST'])
+@login_required
+def edit_message(chat_id, message_id):
+    db_sess = db_session.create_session()
+    try:
+        member = db_sess.query(ChatMember).filter(
+            ChatMember.chat_id == chat_id,
+            ChatMember.user_id == current_user.id
+        ).first()
+        if not member:
+            abort(403, description="Доступ запрещён")
+    finally:
+        db_sess.close()
+
+    new_text = request.form.get('message', '').strip()
+    if not new_text:
+        return redirect(url_for('chat.chat', chat_id=chat_id))
+
+    from services.message_operations import edit_message
+    success = edit_message(chat_id, message_id, new_text, current_user.id)
+    if not success:
+        pass
+    return redirect(url_for('chat.chat', chat_id=chat_id))
+
+
+@chat_bp.route('/chat/<int:chat_id>/delete/<int:message_id>', methods=['POST'])
+@login_required
+def delete_message(chat_id, message_id):
+    db_sess = db_session.create_session()
+    try:
+        member = db_sess.query(ChatMember).filter(
+            ChatMember.chat_id == chat_id,
+            ChatMember.user_id == current_user.id
+        ).first()
+        if not member:
+            abort(403, description="Доступ запрещён")
+    finally:
+        db_sess.close()
+
+    from services.message_operations import delete_message
+    success = delete_message(chat_id, message_id, current_user.id)
+    if not success:
+        pass
+    return redirect(url_for('chat.chat', chat_id=chat_id))

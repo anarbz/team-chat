@@ -105,3 +105,49 @@ def get_message_senders(messages, db_sess=None):
     finally:
         if close_session:
             db_sess.close()
+
+
+def edit_message(chat_id: int, message_id: int, new_text: str, user_id: int) -> bool:
+    db_path = get_chat_db_path(chat_id)
+    if not db_path or not os.path.exists(db_path):
+        return False
+    try:
+        with sqlite3.connect(db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT sender_id FROM messages WHERE id_message = ?",
+                (message_id,)
+            )
+            row = cursor.fetchone()
+            if not row or row[0] != user_id:
+                return False
+            cursor.execute(
+                "UPDATE messages SET message = ? WHERE id_message = ?",
+                (new_text, message_id)
+            )
+            conn.commit()
+            return True
+    except Exception as e:
+        print(f"Ошибка редактирования сообщения: {e}")
+        return False
+
+def delete_message(chat_id: int, message_id: int, user_id: int) -> bool:
+    db_path = get_chat_db_path(chat_id)
+    if not db_path or not os.path.exists(db_path):
+        return False
+    try:
+        with sqlite3.connect(db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT sender_id FROM messages WHERE id_message = ?",
+                (message_id,)
+            )
+            row = cursor.fetchone()
+            if not row or row[0] != user_id:
+                return False
+            cursor.execute("DELETE FROM messages WHERE id_message = ?", (message_id,))
+            conn.commit()
+            return True
+    except Exception as e:
+        print(f"Ошибка удаления сообщения: {e}")
+        return False

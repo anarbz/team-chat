@@ -10,6 +10,10 @@
         .user { font-weight: bold; color: #2c3e50; }
         .time { font-size: 0.8em; color: #7f8c8d; margin-left: 10px; }
         .text { margin-top: 4px; }
+        .actions { margin-top: 5px; font-size: 0.8em; }
+        .actions button, .actions form { display: inline; margin-right: 8px; }
+        .actions button { background: none; border: none; color: #2980b9; cursor: pointer; text-decoration: underline; padding: 0; }
+        .actions button:hover { color: #1c5980; }
         .attachment { margin-top: 4px; font-size: 0.9em; }
         .attachment a { color: #2980b9; text-decoration: none; }
         .attachment a:hover { text-decoration: underline; }
@@ -18,26 +22,56 @@
         .message-input input[type="text"] { flex: 1; padding: 8px; }
         .file-input { margin: 5px 0; }
         button { padding: 8px 16px; }
+        .edit-form { margin-top: 5px; display: none; }
+        .edit-form input[type="text"] { width: 80%; padding: 4px; }
     </style>
+    <script>
+        function showEditForm(messageId) {
+            document.getElementById('text-' + messageId).style.display = 'none';
+            document.getElementById('edit-form-' + messageId).style.display = 'block';
+        }
+        function cancelEdit(messageId) {
+            document.getElementById('text-' + messageId).style.display = 'block';
+            document.getElementById('edit-form-' + messageId).style.display = 'none';
+        }
+        function confirmDelete(messageId) {
+            return confirm('Вы уверены, что хотите удалить это сообщение?');
+        }
+    </script>
 </head>
 <body>
     <h1>Чат: {{ chat_title }} (пользователь: {{ username }})</h1>
-    <div class="messages">
+    <div class="messages" id="messages">
         {% if messages %}
             {% for msg in messages %}
-                <div class="message">
+                <div class="message" id="message-{{ msg['id_message'] }}">
                     <div>
                         <span class="user">{{ msg['user'] }}</span>
                         <span class="time">{{ msg['time'] }}</span>
                     </div>
-                    <div class="text">{{ msg['message'] }}</div>
+                    <div id="text-{{ msg['id_message'] }}" class="text">{{ msg['message'] }}</div>
+                    <div id="edit-form-{{ msg['id_message'] }}" class="edit-form">
+                        <form method="post" action="{{ url_for('chat.edit_message', chat_id=chat_id, message_id=msg['id_message']) }}">
+                            <input type="text" name="message" value="{{ msg['message'] }}" autocomplete="off">
+                            <button type="submit">Сохранить</button>
+                            <button type="button" onclick="cancelEdit({{ msg['id_message'] }})">Отмена</button>
+                        </form>
+                    </div>
                     {% if msg['attachments'] %}
                         <div class="attachment">
-                            📎 Вложения:
+                            Вложения:
                             {% for att in msg['attachments'] %}
                                 <a href="{{ url_for('chat.download_file', chat_id=chat_id, attachment_id=att['id']) }}">{{ att['file_name'] }}</a>
                                 {% if not loop.last %} | {% endif %}
                             {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if msg['sender_id'] == session.get('_user_id')|int %}
+                        <div class="actions">
+                            <button onclick="showEditForm({{ msg['id_message'] }})">Редактировать</button>
+                            <form method="post" action="{{ url_for('chat.delete_message', chat_id=chat_id, message_id=msg['id_message']) }}" style="display:inline;" onsubmit="return confirmDelete({{ msg['id_message'] }})">
+                                <button type="submit">Удалить</button>
+                            </form>
                         </div>
                     {% endif %}
                 </div>
