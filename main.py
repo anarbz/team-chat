@@ -2,7 +2,8 @@ from flask import Flask
 from flask_login import LoginManager
 from data import db_session
 from data.users import User
-from routes import auth_bp, dashboard_bp, enter_bp, chat_bp, chats_list_bp, edit_chat_bp
+from routes import (auth_bp, dashboard_bp, enter_bp, chat_bp,
+                    chats_list_bp, edit_chat_bp, delete_chat_bp)
 
 login_manager = LoginManager()
 
@@ -21,6 +22,7 @@ def create_app():
     app.register_blueprint(chat_bp)
     app.register_blueprint(chats_list_bp)
     app.register_blueprint(edit_chat_bp)
+    app.register_blueprint(delete_chat_bp)
 
     return app
 

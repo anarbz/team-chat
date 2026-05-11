@@ -56,6 +56,14 @@
         </a>
     </form>
 
+    <hr class="my-4">
+
+    <form method="post" action="/delete_chat/{{ chat.id }}">
+        <button class="btn btn-outline-danger btn-sm" type="submit">
+            Удалить чат
+        </button>
+    </form>
+
     <script>
         function addMemberRow() {
             const container = document.getElementById('members-container');
