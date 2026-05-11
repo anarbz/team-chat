@@ -15,10 +15,10 @@
                     <div>
                         <h5 class="mb-1">{{ chat.title }}</h5>
 
-                        {% if chat.is_group %}
-                            <span class="badge bg-info text-dark">групповой чат</span>
-                        {% else %}
+                        {% if member_counts[chat.id] == 2 %}
                             <span class="badge bg-success">личный чат</span>
+                        {% else %}
+                            <span class="badge bg-info text-dark">групповой чат</span>
                         {% endif %}
                     </div>
 
