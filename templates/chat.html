@@ -2,27 +2,44 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Чат {{ chat_id }} - {{ username }}</title>
+    <title>Чат: {{ chat_title }} ({{ username }})</title>
     <style>
         body { font-family: sans-serif; margin: 20px; }
         .messages { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: scroll; margin-bottom: 20px; }
-        .message { margin-bottom: 8px; }
+        .message { margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
         .user { font-weight: bold; color: #2c3e50; }
         .time { font-size: 0.8em; color: #7f8c8d; margin-left: 10px; }
-        form { display: flex; gap: 10px; }
-        input[type="text"] { flex: 1; padding: 8px; }
+        .text { margin-top: 4px; }
+        .attachment { margin-top: 4px; font-size: 0.9em; }
+        .attachment a { color: #2980b9; text-decoration: none; }
+        .attachment a:hover { text-decoration: underline; }
+        form { display: flex; flex-direction: column; gap: 10px; }
+        .message-input { display: flex; gap: 10px; }
+        .message-input input[type="text"] { flex: 1; padding: 8px; }
+        .file-input { margin: 5px 0; }
         button { padding: 8px 16px; }
     </style>
 </head>
 <body>
-    <h1>Чат: {{ chat_id }} (пользователь: {{ username }})</h1>
+    <h1>Чат: {{ chat_title }} (пользователь: {{ username }})</h1>
     <div class="messages">
         {% if messages %}
             {% for msg in messages %}
                 <div class="message">
-                    <span class="user">{{ msg['user'] }}</span>
-                    <span class="time">{{ msg['time'] }}</span>
+                    <div>
+                        <span class="user">{{ msg['user'] }}</span>
+                        <span class="time">{{ msg['time'] }}</span>
+                    </div>
                     <div class="text">{{ msg['message'] }}</div>
+                    {% if msg['attachments'] %}
+                        <div class="attachment">
+                            📎 Вложения:
+                            {% for att in msg['attachments'] %}
+                                <a href="{{ url_for('chat.download_file', chat_id=chat_id, attachment_id=att['id']) }}">{{ att['file_name'] }}</a>
+                                {% if not loop.last %} | {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
             {% endfor %}
         {% else %}
@@ -30,10 +47,16 @@
         {% endif %}
     </div>
 
-    <form method="POST">
-        <input type="text" name="message" placeholder="Введите сообщение..." autocomplete="off" required>
-        <button type="submit">Отправить</button>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="message-input">
+            <input type="text" name="message" placeholder="Введите сообщение..." autocomplete="off">
+            <button type="submit">Отправить</button>
+        </div>
+        <div class="file-input">
+            <input type="file" name="file">
+            <small>Можно прикрепить файл</small>
+        </div>
     </form>
-    <p><a href="/">На главную</a></p>
+    <p><a href="{{ url_for('dashboard.dashboard') }}">На главную</a></p>
 </body>
 </html>

@@ -33,3 +33,34 @@ def init_chat_messages_db(db_path: str):
         """)
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_time ON messages(time)")
         conn.commit()
+
+
+def init_attachments_table(db_path: str):
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS attachments (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                message_id INTEGER NOT NULL,
+                file_name TEXT NOT NULL,
+                file_path TEXT NOT NULL,
+                file_size INTEGER,
+                mime_type TEXT,
+                FOREIGN KEY (message_id) REFERENCES messages(id_message) ON DELETE CASCADE
+            )
+        """)
+        conn.commit()
+
+def init_chat_messages_db(db_path: str):
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS messages (
+                id_message INTEGER PRIMARY KEY AUTOINCREMENT,
+                sender_id INTEGER NOT NULL,
+                message TEXT NOT NULL,
+                time TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_time ON messages(time)")
+        conn.commit()
+    init_attachments_table(db_path)

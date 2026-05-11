@@ -6,7 +6,7 @@ from data import db_session
 from data.users import User
 
 
-def save_message(chat_id: int, sender_id: int, text: str) -> bool:
+def save_message(chat_id: int, sender_id: int, text: str, file_info: dict = None) -> bool:
     db_path = get_chat_db_path(chat_id)
     if not db_path or not os.path.exists(db_path):
         return False
@@ -14,17 +14,42 @@ def save_message(chat_id: int, sender_id: int, text: str) -> bool:
     try:
         now = datetime.datetime.now()
         with sqlite3.connect(db_path) as conn:
-            conn.execute(
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS attachments (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    message_id INTEGER NOT NULL,
+                    file_name TEXT NOT NULL,
+                    file_path TEXT NOT NULL,
+                    file_size INTEGER,
+                    mime_type TEXT,
+                    FOREIGN KEY (message_id) REFERENCES messages(id_message) ON DELETE CASCADE
+                )
+            """)
+
+            cursor.execute(
                 "INSERT INTO messages (sender_id, message, time) VALUES (?, ?, ?)",
                 (sender_id, text, now)
             )
+            message_id = cursor.lastrowid
+
+            if file_info:
+                cursor.execute(
+                    """INSERT INTO attachments 
+                       (message_id, file_name, file_path, file_size, mime_type) 
+                       VALUES (?, ?, ?, ?, ?)""",
+                    (message_id, file_info['file_name'], file_info['file_path'],
+                     file_info['file_size'], file_info['mime_type'])
+                )
             conn.commit()
         return True
-    except Exception:
+    except Exception as e:
+        print(f"Ошибка сохранения сообщения: {e}")
         return False
 
 
-def get_messages(chat_id: int, limit: int = 50, offset: int = 0):
+def get_messages_with_attachments(chat_id: int, limit: int = 50, offset: int = 0):
     db_path = get_chat_db_path(chat_id)
     if not db_path or not os.path.exists(db_path):
         return []
@@ -35,33 +60,48 @@ def get_messages(chat_id: int, limit: int = 50, offset: int = 0):
             "SELECT id_message, sender_id, message, time FROM messages ORDER BY time LIMIT ? OFFSET ?",
             (limit, offset)
         )
-        rows = cur.fetchall()
-    return [dict(row) for row in rows]
+        messages = [dict(row) for row in cur.fetchall()]
+
+        if not messages:
+            return messages
+
+        # Собираем attachments для этих сообщений
+        message_ids = [m['id_message'] for m in messages]
+        placeholders = ','.join('?' for _ in message_ids)
+        cur = conn.execute(f"""
+            SELECT message_id, id, file_name, file_path, file_size, mime_type 
+            FROM attachments 
+            WHERE message_id IN ({placeholders})
+        """, message_ids)
+        attachments = cur.fetchall()
+
+        att_by_msg = {}
+        for att in attachments:
+            att_by_msg.setdefault(att['message_id'], []).append(dict(att))
+
+        for msg in messages:
+            msg['attachments'] = att_by_msg.get(msg['id_message'], [])
+    return messages
+
+
+def get_messages(chat_id: int, limit: int = 50, offset: int = 0):
+    msgs = get_messages_with_attachments(chat_id, limit, offset)
+    for msg in msgs:
+        msg.pop('attachments', None)
+    return msgs
 
 
 def get_message_senders(messages, db_sess=None):
     if not messages:
         return {}
-
     sender_ids = {msg['sender_id'] for msg in messages}
     close_session = False
     if db_sess is None:
         db_sess = db_session.create_session()
         close_session = True
-
     try:
         users = db_sess.query(User).filter(User.id.in_(sender_ids)).all()
         return {u.id: u.login for u in users}
     finally:
         if close_session:
             db_sess.close()
-
-
-def count_messages(chat_id: int) -> int:
-    db_path = get_chat_db_path(chat_id)
-    if not db_path or not os.path.exists(db_path):
-        return 0
-
-    with sqlite3.connect(db_path) as conn:
-        cur = conn.execute("SELECT COUNT(*) FROM messages")
-        return cur.fetchone()[0]
