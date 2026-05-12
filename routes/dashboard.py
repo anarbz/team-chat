@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from data import db_session
 from data.users import User
 from data.chat_members import ChatMember
-from chat.chat_service import create_chat
+from services.chat_creation import create_chat
 
 dashboard_bp = Blueprint('dashboard', __name__, template_folder='../templates')
 
@@ -57,8 +57,7 @@ def create_chat_route():
             return render_template('create_chat.html', errors=errors,
                                    chat_type=chat_type)
 
-        chat_id = create_chat(title, owner_id=current_user.id,
-                              is_group=is_group)
+        chat_id = create_chat(title, current_user.id, is_group=is_group)
 
         creator_already_added = current_user.login in existing_logins
         if not creator_already_added:
