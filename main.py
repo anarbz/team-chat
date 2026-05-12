@@ -6,7 +6,6 @@ from routes import auth_bp, dashboard_bp, enter_bp, chat_bp, chats_list_bp, edit
 
 login_manager = LoginManager()
 
-
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'my-super-secretkey_123'
@@ -33,7 +32,6 @@ def load_user(user_id):
 
 def main():
     app = create_app()
-    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB
     app.run(debug=True)
 
 if __name__ == '__main__':
