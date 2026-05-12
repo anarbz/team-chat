@@ -6,14 +6,19 @@
     <style>
         body { font-family: sans-serif; margin: 20px; }
         .messages { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: scroll; margin-bottom: 20px; }
-        .message { margin-bottom: 8px; }
+        .message { margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
         .user { font-weight: bold; color: #2c3e50; }
         .time { font-size: 0.8em; color: #7f8c8d; margin-left: 10px; }
         .text { margin: 4px 0; }
+        .attachments { margin: 5px 0 0 20px; font-size: 0.9em; }
+        .attachments a { color: #0066cc; text-decoration: none; }
+        .attachments a:hover { text-decoration: underline; }
         .actions { margin-left: 20px; font-size: 0.8em; margin-top: 2px; }
         .actions button, .actions form { display: inline; margin-right: 8px; }
-        form { display: flex; gap: 10px; margin-top: 10px; }
-        input[type="text"] { flex: 1; padding: 8px; }
+        form { display: flex; flex-direction: column; gap: 10px; }
+        .form-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .form-row input[type="text"] { flex: 1; padding: 8px; }
+        .form-row input[type="file"] { flex: 0.5; }
         button { padding: 8px 16px; }
         .edit-form { margin-top: 5px; margin-left: 20px; }
         .edit-form input { width: 70%; padding: 4px; margin-right: 5px; }
@@ -28,13 +33,24 @@
                     <span class="user">{{ msg.user }}</span>
                     <span class="time">{{ msg.time }}</span>
                     <div class="text">{{ msg.message }}</div>
+
+                    {% if msg.attachments %}
+                        <div class="attachments">
+                            {% for att in msg.attachments %}
+                                <a href="/download/{{ chat_id }}/{{ att.id }}" target="_blank">
+                                    📎 {{ att.file_name }} ({{ (att.file_size / 1024)|round(1) }} KB)
+                                </a><br>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
                     {% if msg.user == username %}
-                    <div class="actions">
-                        <button class="edit-btn" data-id="{{ msg.id }}" data-text="{{ msg.message }}" onclick="editMessage(this)">Редактировать</button>
-                        <form method="post" action="/chat/{{ chat_id }}/delete_message/{{ msg.id }}" style="display: inline;">
-                            <button type="submit" onclick="return confirm('Удалить сообщение?')">Удалить</button>
-                        </form>
-                    </div>
+                        <div class="actions">
+                            <button class="edit-btn" data-id="{{ msg.id }}" data-text="{{ msg.message }}" onclick="editMessage(this)">Редактировать</button>
+                            <form method="post" action="/chat/{{ chat_id }}/delete_message/{{ msg.id }}" style="display: inline;">
+                                <button type="submit" onclick="return confirm('Удалить сообщение?')">Удалить</button>
+                            </form>
+                        </div>
                     {% endif %}
                 </div>
             {% endfor %}
@@ -43,9 +59,12 @@
         {% endif %}
     </div>
 
-    <form method="POST">
-        <input type="text" name="message" placeholder="Введите сообщение..." autocomplete="off" required>
-        <button type="submit">Отправить</button>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-row">
+            <input type="text" name="message" placeholder="Введите сообщение..." autocomplete="off">
+            <input type="file" name="file">
+            <button type="submit">Отправить</button>
+        </div>
     </form>
     <p><a href="/">На главную</a></p>
 
