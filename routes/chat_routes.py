@@ -8,6 +8,7 @@ from data.chats import Chat
 from data.chat_members import ChatMember
 from data.users import User
 from utils.chat_db_utils import get_chat_db_path
+from services.message_operations import edit_message, delete_message
 
 chat_bp = Blueprint('chat', __name__, template_folder='../templates')
 
@@ -60,6 +61,7 @@ def chat(chat_id):
         messages = []
         for row in messages_rows:
             messages.append({
+                'id': row['id_message'],
                 'user': users_map.get(row['sender_id'], 'Unknown'),
                 'time': row['time'],
                 'message': row['message']
@@ -74,3 +76,24 @@ def chat(chat_id):
 
     finally:
         db_sess.close()
+
+
+@chat_bp.route('/chat/<int:chat_id>/delete_message/<int:message_id>', methods=['POST'])
+@login_required
+def delete_message_route(chat_id, message_id):
+    success = delete_message(chat_id, message_id, current_user.id)
+    if not success:
+        return 'Нельзя удалить чужое сообщение', 403
+    return redirect(url_for('chat.chat', chat_id=chat_id))
+
+@chat_bp.route('/chat/<int:chat_id>/edit_message/<int:message_id>', methods=['POST'])
+@login_required
+def edit_message_route(chat_id, message_id):
+    data = request.get_json()
+    new_text = data.get('new_text', '').strip() if data else ''
+    if not new_text:
+        return {'error': 'Пустое сообщение'}, 400
+    success = edit_message(chat_id, message_id, new_text, current_user.id)
+    if not success:
+        return {'error': 'Нельзя редактировать чужое сообщение'}, 403
+    return {'success': True}
