@@ -5,7 +5,8 @@
 
     <div class="mb-3">
         <a class="btn btn-secondary" href="/dashboard">Назад в панель</a>
-        <a class="btn btn-primary" href="/create_chat">Создать новый чат</a>
+        <a class="btn btn-primary" href="/create_chat?type=personal">Начать беседу</a>
+        <a class="btn btn-outline-primary" href="/create_chat?type=group">Создать групповой чат</a>
     </div>
 
     {% if chats %}
@@ -15,21 +16,30 @@
                     <div>
                         <h5 class="mb-1">{{ chat.title }}</h5>
 
-                        {% if member_counts[chat.id] == 2 %}
-                            <span class="badge bg-success">личный чат</span>
-                        {% else %}
+                        {% if chat.is_group %}
                             <span class="badge bg-info text-dark">групповой чат</span>
+                        {% else %}
+                            <span class="badge bg-success">личный чат</span>
+                        {% endif %}
+
+                        {% if chat.owner_id == current_user.id %}
+                            <span class="badge bg-secondary">создатель</span>
                         {% endif %}
                     </div>
 
                     <div class="d-flex gap-2">
-                        <a href="/edit_chat/{{ chat.id }}" class="btn btn-outline-secondary btn-sm">
-                            Редактировать
-                        </a>
+                        {% if not chat.is_group or chat.owner_id == current_user.id %}
+                            <a href="/edit_chat/{{ chat.id }}"
+                               class="btn btn-outline-secondary btn-sm">
+                                Редактировать
+                            </a>
+                        {% endif %}
 
                         <form method="post" action="/enter_chat">
                             <input type="hidden" name="chat_id" value="{{ chat.id }}">
-                            <button type="submit" class="btn btn-outline-primary btn-sm">Открыть</button>
+                            <button type="submit" class="btn btn-outline-primary btn-sm">
+                                Открыть
+                            </button>
                         </form>
                     </div>
                 </div>

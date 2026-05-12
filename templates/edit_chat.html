@@ -12,6 +12,12 @@
         </div>
     {% endif %}
 
+    {% if not chat.is_group %}
+        <div class="alert alert-info" role="alert">
+            Это личный чат. Состав участников менять нельзя.
+        </div>
+    {% endif %}
+
     <form method="post">
         <label class="form-label">Название чата:</label>
         <input class="form-control mb-3"
@@ -20,32 +26,49 @@
                value="{{ chat.title }}"
                required>
 
-        <label class="form-label">Участники (логины):</label>
+        <label class="form-label">Участники:</label>
 
-        <div id="members-container">
-            {% for member in members %}
-                <div class="mb-2">
-                    <input class="form-control"
-                           type="text"
-                           name="logins"
-                           value="{{ member.login }}"
-                           placeholder="Логин">
-                    <button class="btn btn-outline-secondary btn-sm mt-1"
-                            type="button"
-                            onclick="this.parentElement.remove()">
-                        Удалить
-                    </button>
-                </div>
-            {% endfor %}
-        </div>
+        {% if chat.is_group %}
+            <div id="members-container">
+                {% for member in members %}
+                    <div class="mb-2">
+                        <input class="form-control"
+                               type="text"
+                               name="logins"
+                               value="{{ member.login }}"
+                               placeholder="Логин">
 
-        <button class="btn btn-secondary btn-sm mt-2"
-                type="button"
-                onclick="addMemberRow()">
-            Добавить участника
-        </button>
+                        {% if member.id != chat.owner_id %}
+                            <button class="btn btn-outline-secondary btn-sm mt-1"
+                                    type="button"
+                                    onclick="this.parentElement.remove()">
+                                Удалить
+                            </button>
+                        {% else %}
+                            <div class="form-text">
+                                Создателя группы удалить нельзя
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
 
-        <br><br>
+            <button class="btn btn-secondary btn-sm mt-2"
+                    type="button"
+                    onclick="addMemberRow()">
+                Добавить участника
+            </button>
+
+            <br><br>
+        {% else %}
+            <ul class="list-group mb-3">
+                {% for member in members %}
+                    <li class="list-group-item">
+                        {{ member.login }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
 
         <button class="btn btn-primary" type="submit">
             Сохранить
@@ -64,13 +87,15 @@
         </button>
     </form>
 
-    <script>
-        function addMemberRow() {
-            const container = document.getElementById('members-container');
-            const div = document.createElement('div');
-            div.className = 'mb-2';
-            div.innerHTML = '<input class="form-control" type="text" name="logins" placeholder="Логин"> <button class="btn btn-outline-secondary btn-sm mt-1" type="button" onclick="this.parentElement.remove()">Удалить</button>';
-            container.appendChild(div);
-        }
-    </script>
+    {% if chat.is_group %}
+        <script>
+            function addMemberRow() {
+                const container = document.getElementById('members-container');
+                const div = document.createElement('div');
+                div.className = 'mb-2';
+                div.innerHTML = '<input class="form-control" type="text" name="logins" placeholder="Логин"> <button class="btn btn-outline-secondary btn-sm mt-1" type="button" onclick="this.parentElement.remove()">Удалить</button>';
+                container.appendChild(div);
+            }
+        </script>
+    {% endif %}
 {% endblock %}

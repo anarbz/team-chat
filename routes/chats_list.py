@@ -25,16 +25,9 @@ def chats():
     else:
         user_chats = []
 
-    # кол-во участников на чат
-    member_counts = {}
-    for chat in user_chats:
-        count = db_sess.query(ChatMember).filter(
-            ChatMember.chat_id == chat.id).count()
-        member_counts[chat.id] = count
 
     db_sess.close()
 
     return render_template('chats.html',
                            chats=user_chats,
-                           title='Мои чаты',
-                           member_counts=member_counts)
+                           title='Мои чаты')

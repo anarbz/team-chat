@@ -19,13 +19,32 @@ def dashboard():
 @login_required
 def create_chat_route():
     if request.method == 'POST':
+        chat_type = request.form.get('chat_type', 'group')
+        is_group = chat_type == 'group'
+
         title = request.form.get('title', '').strip()
         logins = request.form.getlist('logins')
         logins = [login.strip() for login in logins if login.strip()]
 
         if not title or not logins:
             errors = ['Название чата обязательно'] if not title else ['Укажите хотя бы одного участника']
-            return render_template('create_chat.html', errors=errors)
+            return render_template('create_chat.html', errors=errors,
+                                   chat_type=chat_type)
+
+        if current_user.login in logins:
+            errors = ['Не нужно добавлять себя в участники']
+            return render_template('create_chat.html', errors=errors,
+                                   chat_type=chat_type)
+
+        if not is_group and len(logins) != 1:
+            errors = ['Для личного чата нужен ровно один собеседник']
+            return render_template('create_chat.html', errors=errors,
+                                   chat_type=chat_type)
+
+        if is_group and len(logins) < 2:
+            errors = ['Для группового чата нужно минимум два участника кроме вас']
+            return render_template('create_chat.html', errors=errors,
+                                   chat_type=chat_type)
 
         db_sess = db_session.create_session()
         users = db_sess.query(User).filter(User.login.in_(logins)).all()
@@ -34,9 +53,12 @@ def create_chat_route():
 
         if missing_logins:
             errors = [f"Пользователь '{login}' не найден" for login in missing_logins]
-            return render_template('create_chat.html', errors=errors)
+            db_sess.close()
+            return render_template('create_chat.html', errors=errors,
+                                   chat_type=chat_type)
 
-        chat_id = create_chat(title, is_group=True)
+        chat_id = create_chat(title, owner_id=current_user.id,
+                              is_group=is_group)
 
         creator_already_added = current_user.login in existing_logins
         if not creator_already_added:
@@ -47,13 +69,19 @@ def create_chat_route():
                 ChatMember.chat_id == chat_id,
                 ChatMember.user_id == user.id
             ).first()
+
             if not exists:
                 member = ChatMember(chat_id=chat_id, user_id=user.id)
                 db_sess.add(member)
 
         db_sess.commit()
+        db_sess.close()
 
-        success_message = f"Чат успешно создан! ID чата: {chat_id}"
-        return render_template('create_chat.html', success_message=success_message)
+        return redirect(url_for('chat.chat', chat_id=chat_id))
 
-    return render_template('create_chat.html')
+    chat_type = request.args.get('type', 'group')
+
+    if chat_type not in ['personal', 'group']:
+        chat_type = 'group'
+
+    return render_template('create_chat.html', chat_type=chat_type)

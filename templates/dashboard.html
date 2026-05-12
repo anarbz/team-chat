@@ -1,29 +1,36 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Панель управления</title>
-    <style>
-        body { font-family: sans-serif; margin: 40px; }
-        .actions { margin: 20px 0; }
-        button, input { padding: 8px 12px; }
-        .join-chat { margin-top: 20px; }
-    </style>
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block content %}
     <h1>Добро пожаловать, {{ current_user.login }}!</h1>
-    <div class="actions">
-        <a href="/chats"><button>Мои чаты</button></a>
-        <a href="/create_chat"><button>Создать новый чат</button></a>
-        <a href="/logout"><button>Выйти</button></a>
+
+    <div class="mb-4">
+        <a class="btn btn-primary" href="/create_chat?type=personal">
+            Начать беседу
+        </a>
+
+        <a class="btn btn-secondary" href="/create_chat?type=group">
+            Создать групповой чат
+        </a>
+
+        <a class="btn btn-outline-primary" href="/chats">
+            Мои чаты
+        </a>
     </div>
 
-    <div class="join-chat">
-        <h3>Войти в существующий чат по ID</h3>
-        <form method="post" action="/enter_chat">
-            <input type="number" name="chat_id" placeholder="Введите ID чата" required>
-            <button type="submit">Перейти в чат</button>
-        </form>
+    <div class="card">
+        <div class="card-body">
+            <h5>Войти в существующий чат по ID</h5>
+
+            <form method="post" action="/enter_chat" class="d-flex gap-2">
+                <input class="form-control"
+                       type="number"
+                       name="chat_id"
+                       placeholder="Введите ID чата"
+                       required>
+                <button class="btn btn-primary" type="submit">
+                    Перейти
+                </button>
+            </form>
+        </div>
     </div>
-</body>
-</html>
+{% endblock %}

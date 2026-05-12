@@ -45,7 +45,7 @@ def init_chat_messages_db(db_path: str):
         conn.commit()
 
 
-def create_chat(title, is_group: bool = True) -> int:
+def create_chat(title, owner_id, is_group: bool = True) -> int:
     """Создаёт чат в основной БД и возвращает его id"""
     ensure_chat_db_dir()
     db_sess = db_session.create_session()
@@ -53,6 +53,7 @@ def create_chat(title, is_group: bool = True) -> int:
         chat = Chat(
             title=title,
             is_group=is_group,
+            owner_id=owner_id,
             messages_db_path=""
         )
         db_sess.add(chat)

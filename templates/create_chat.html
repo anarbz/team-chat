@@ -1,7 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Создать новый чат</h1>
+    {% if chat_type == 'personal' %}
+        <h1>Начать беседу</h1>
+        <p class="text-muted">Личный чат создаётся между вами и одним собеседником.</p>
+    {% else %}
+        <h1>Создать групповой чат</h1>
+        <p class="text-muted">Групповой чат создаётся для трёх и более участников.</p>
+    {% endif %}
 
     {% if errors %}
         <div class="alert alert-danger" role="alert">
@@ -13,49 +19,78 @@
     {% endif %}
 
     <form method="post">
+        <input type="hidden" name="chat_type" value="{{ chat_type }}">
+
         <label class="form-label">Название чата:</label>
         <input class="form-control mb-3" type="text" name="title" required>
 
-        <label class="form-label">Участники (логины):</label><br>
-        <div id="members-container">
-            <div class="mb-2">
-                <input class="form-control" type="text" name="logins" placeholder="Логин">
-                <button class="btn btn-outline-secondary btn-sm mt-1"
-                        type="button"
-                        onclick="this.parentElement.remove()">
-                    Удалить
-                </button>
-            </div>
-        </div>
+        {% if chat_type == 'personal' %}
+            <label class="form-label">Логин собеседника:</label>
+            <input class="form-control mb-3"
+                   type="text"
+                   name="logins"
+                   placeholder="Логин"
+                   required>
+        {% else %}
+            <label class="form-label">Участники (логины):</label>
 
-        <button class="btn btn-secondary btn-sm mt-2"
-                type="button"
-                onclick="addMemberRow()">
-            Добавить участника
+            <div id="members-container">
+                <div class="mb-2">
+                    <input class="form-control"
+                           type="text"
+                           name="logins"
+                           placeholder="Логин">
+                    <button class="btn btn-outline-secondary btn-sm mt-1"
+                            type="button"
+                            onclick="this.parentElement.remove()">
+                        Удалить
+                    </button>
+                </div>
+
+                <div class="mb-2">
+                    <input class="form-control"
+                           type="text"
+                           name="logins"
+                           placeholder="Логин">
+                    <button class="btn btn-outline-secondary btn-sm mt-1"
+                            type="button"
+                            onclick="this.parentElement.remove()">
+                        Удалить
+                    </button>
+                </div>
+            </div>
+
+            <button class="btn btn-secondary btn-sm mt-2"
+                    type="button"
+                    onclick="addMemberRow()">
+                Добавить участника
+            </button>
+
+            <br><br>
+        {% endif %}
+
+        <button class="btn btn-primary" type="submit">
+            {% if chat_type == 'personal' %}
+                Начать беседу
+            {% else %}
+                Создать групповой чат
+            {% endif %}
         </button>
 
-        <br><br>
-
-        <button class="btn btn-primary" type="submit">Создать чат</button>
+        <a class="btn btn-outline-secondary" href="/dashboard">
+            Назад
+        </a>
     </form>
 
-    {% if success_message %}
-        <div class="alert alert-success mt-3" role="alert">
-            {{ success_message }}
-        </div>
+    {% if chat_type == 'group' %}
+        <script>
+            function addMemberRow() {
+                const container = document.getElementById('members-container');
+                const div = document.createElement('div');
+                div.className = 'mb-2';
+                div.innerHTML = '<input class="form-control" type="text" name="logins" placeholder="Логин"> <button class="btn btn-outline-secondary btn-sm mt-1" type="button" onclick="this.parentElement.remove()">Удалить</button>';
+                container.appendChild(div);
+            }
+        </script>
     {% endif %}
-
-    <p class="mt-3">
-        <a class="btn btn-outline-secondary" href="/dashboard">На главную</a>
-    </p>
-
-    <script>
-        function addMemberRow() {
-            const container = document.getElementById('members-container');
-            const div = document.createElement('div');
-            div.className = 'mb-2';
-            div.innerHTML = '<input class="form-control" type="text" name="logins" placeholder="Логин"> <button class="btn btn-outline-secondary btn-sm mt-1" type="button" onclick="this.parentElement.remove()">Удалить</button>';
-            container.appendChild(div);
-        }
-    </script>
 {% endblock %}

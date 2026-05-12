@@ -28,4 +28,4 @@ def enter_chat():
     if not membership:
         return 'У вас нет доступа к этому чату', 403
 
-    return redirect(url_for('chat.chat', chat_id=chat_id, username=current_user.login))
+    return redirect(url_for('chat.chat', chat_id=chat_id))

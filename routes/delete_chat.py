@@ -31,6 +31,11 @@ def delete_chat(chat_id):
         db_sess.close()
         return 'У вас нет доступа к этому чату'
 
+    # групповой чат может удалить только создатель
+    if chat.is_group and chat.owner_id != current_user.id:
+        db_sess.close()
+        return 'Удалить групповой чат может только создатель'
+
     db_path = chat.messages_db_path
 
     # удаляем участников чата
