@@ -24,12 +24,13 @@ def init_chat_messages_db(db_path: str):
         conn.commit()
 
 
-def create_chat(title, is_group: bool = True) -> int:
+def create_chat(title, owner_id: int, is_group: bool = True) -> int:
     ensure_chat_db_dir()
     db_sess = db_session.create_session()
     try:
         chat = Chat(
             title=title,
+            owner_id=owner_id,
             is_group=is_group,
             messages_db_path=""
         )
@@ -70,7 +71,7 @@ def create_full_chat(title, creator_user, member_logins, is_group=True):
         if missing:
             raise ValueError(f"Пользователи не найдены: {missing}")
 
-        chat_id = create_chat(title, is_group)
+        chat_id = create_chat(title, creator_user.id, is_group)
 
         member_ids = [u.id for u in users]
         if creator_user.id not in member_ids:

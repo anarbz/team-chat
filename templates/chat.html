@@ -9,9 +9,14 @@
         .message { margin-bottom: 8px; }
         .user { font-weight: bold; color: #2c3e50; }
         .time { font-size: 0.8em; color: #7f8c8d; margin-left: 10px; }
-        form { display: flex; gap: 10px; }
+        .text { margin: 4px 0; }
+        .actions { margin-left: 20px; font-size: 0.8em; margin-top: 2px; }
+        .actions button, .actions form { display: inline; margin-right: 8px; }
+        form { display: flex; gap: 10px; margin-top: 10px; }
         input[type="text"] { flex: 1; padding: 8px; }
         button { padding: 8px 16px; }
+        .edit-form { margin-top: 5px; margin-left: 20px; }
+        .edit-form input { width: 70%; padding: 4px; margin-right: 5px; }
     </style>
 </head>
 <body>
@@ -19,10 +24,18 @@
     <div class="messages">
         {% if messages %}
             {% for msg in messages %}
-                <div class="message">
-                    <span class="user">{{ msg['user'] }}</span>
-                    <span class="time">{{ msg['time'] }}</span>
-                    <div class="text">{{ msg['message'] }}</div>
+                <div class="message" data-id="{{ msg.id }}">
+                    <span class="user">{{ msg.user }}</span>
+                    <span class="time">{{ msg.time }}</span>
+                    <div class="text">{{ msg.message }}</div>
+                    {% if msg.user == username %}
+                    <div class="actions">
+                        <button class="edit-btn" data-id="{{ msg.id }}" data-text="{{ msg.message }}" onclick="editMessage(this)">Редактировать</button>
+                        <form method="post" action="/chat/{{ chat_id }}/delete_message/{{ msg.id }}" style="display: inline;">
+                            <button type="submit" onclick="return confirm('Удалить сообщение?')">Удалить</button>
+                        </form>
+                    </div>
+                    {% endif %}
                 </div>
             {% endfor %}
         {% else %}
@@ -35,5 +48,61 @@
         <button type="submit">Отправить</button>
     </form>
     <p><a href="/">На главную</a></p>
+
+    <script>
+        async function editMessage(btn) {
+            const messageDiv = btn.closest('.message');
+            const originalText = btn.dataset.text;
+            const messageId = btn.dataset.id;
+            const chatId = {{ chat_id }};
+
+            if (messageDiv.querySelector('.edit-form')) return;
+
+            const editForm = document.createElement('div');
+            editForm.className = 'edit-form';
+            editForm.innerHTML = `
+                <input type="text" value="${originalText.replace(/"/g, '&quot;')}" style="width: 60%; padding: 4px;">
+                <button onclick="saveEdit(this, ${messageId}, ${chatId})">Сохранить</button>
+                <button onclick="cancelEdit(this)">Отмена</button>
+            `;
+            messageDiv.appendChild(editForm);
+            btn.style.display = 'none';
+        }
+
+        async function saveEdit(btn, messageId, chatId) {
+            const editForm = btn.closest('.edit-form');
+            const input = editForm.querySelector('input');
+            const newText = input.value.trim();
+            if (!newText) return;
+
+            const response = await fetch(`/chat/${chatId}/edit_message/${messageId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ new_text: newText })
+            });
+
+            if (response.ok) {
+                const messageDiv = editForm.closest('.message');
+                messageDiv.querySelector('.text').innerText = newText;
+                const editBtn = messageDiv.querySelector('.edit-btn');
+                if (editBtn) {
+                    editBtn.dataset.text = newText;
+                    editBtn.style.display = 'inline-block';
+                }
+                editForm.remove();
+            } else {
+                const err = await response.json();
+                alert('Ошибка: ' + (err.error || 'неизвестная ошибка'));
+            }
+        }
+
+        function cancelEdit(btn) {
+            const editForm = btn.closest('.edit-form');
+            const messageDiv = editForm.closest('.message');
+            editForm.remove();
+            const editBtn = messageDiv.querySelector('.edit-btn');
+            if (editBtn) editBtn.style.display = 'inline-block';
+        }
+    </script>
 </body>
 </html>
