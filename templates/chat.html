@@ -1,108 +1,167 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Чат {{ chat_id }} - {{ username }}</title>
-    <style>
-        body { font-family: sans-serif; margin: 20px; }
-        .messages { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: scroll; margin-bottom: 20px; }
-        .message { margin-bottom: 8px; }
-        .user { font-weight: bold; color: #2c3e50; }
-        .time { font-size: 0.8em; color: #7f8c8d; margin-left: 10px; }
-        .text { margin: 4px 0; }
-        .actions { margin-left: 20px; font-size: 0.8em; margin-top: 2px; }
-        .actions button, .actions form { display: inline; margin-right: 8px; }
-        form { display: flex; gap: 10px; margin-top: 10px; }
-        input[type="text"] { flex: 1; padding: 8px; }
-        button { padding: 8px 16px; }
-        .edit-form { margin-top: 5px; margin-left: 20px; }
-        .edit-form input { width: 70%; padding: 4px; margin-right: 5px; }
-    </style>
-</head>
-<body>
-    <h1>Чат: {{ chat_id }} (пользователь: {{ username }})</h1>
-    <div class="messages">
-        {% if messages %}
-            {% for msg in messages %}
-                <div class="message" data-id="{{ msg.id }}">
-                    <span class="user">{{ msg.user }}</span>
-                    <span class="time">{{ msg.time }}</span>
-                    <div class="text">{{ msg.message }}</div>
-                    {% if msg.user == username %}
-                    <div class="actions">
-                        <button class="edit-btn" data-id="{{ msg.id }}" data-text="{{ msg.message }}" onclick="editMessage(this)">Редактировать</button>
-                        <form method="post" action="/chat/{{ chat_id }}/delete_message/{{ msg.id }}" style="display: inline;">
-                            <button type="submit" onclick="return confirm('Удалить сообщение?')">Удалить</button>
-                        </form>
-                    </div>
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1>{{ chat_title }}</h1>
+                <a href="{{ url_for('chats_list.chats') }}" class="btn btn-outline-secondary">← Все чаты</a>
+            </div>
+
+            <!-- Окно сообщений -->
+            <div class="card">
+                <div class="card-body" id="messages-container" style="height: 500px; overflow-y: auto;">
+                    {% if messages %}
+                        {% for msg in messages %}
+                            <div class="message mb-3" data-id="{{ msg.id }}" id="msg-{{ msg.id }}">
+                                <div class="d-flex justify-content-between">
+                                    <strong class="user">{{ msg.user }}</strong>
+                                    <small class="text-muted">{{ msg.time }}</small>
+                                </div>
+                                <div class="message-text mt-1">{{ msg.message }}</div>
+
+                                <!-- Вложения -->
+                                {% if msg.attachments %}
+                                    <div class="attachments mt-1">
+                                        {% for att in msg.attachments %}
+                                            <a href="{{ url_for('chat.download_file', chat_id=chat_id, attachment_id=att.id) }}" class="badge bg-secondary text-decoration-none">
+                                                📎 {{ att.file_name }}
+                                            </a>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                <!-- Кнопки действий для своих сообщений -->
+                                {% if msg.user == username %}
+                                    <div class="mt-1">
+                                        <button class="btn btn-sm btn-outline-primary edit-btn"
+                                                data-id="{{ msg.id }}"
+                                                data-text="{{ msg.message }}">✏️ Редактировать</button>
+                                        <form method="post" action="{{ url_for('chat.delete_message_route', chat_id=chat_id, message_id=msg.id) }}"
+                                              style="display: inline;">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('Удалить сообщение?')">🗑️ Удалить</button>
+                                        </form>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info">Сообщений пока нет. Напишите первое!</div>
                     {% endif %}
                 </div>
-            {% endfor %}
-        {% else %}
-            <p>Сообщений пока нет. Напишите первое!</p>
-        {% endif %}
+                <div class="card-footer">
+                    <!-- Форма отправки сообщения с файлом -->
+                    <form method="post" enctype="multipart/form-data" id="message-form">
+                        <div class="mb-2">
+                            <textarea class="form-control" name="message" rows="2" placeholder="Введите сообщение..."></textarea>
+                        </div>
+                        <div class="d-flex gap-2 align-items-center">
+                            <label class="btn btn-outline-secondary btn-sm">
+                                📎 Прикрепить файл <input type="file" name="file" style="display: none;">
+                            </label>
+                            <button type="submit" class="btn btn-primary">Отправить</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
+</div>
 
-    <form method="POST">
-        <input type="text" name="message" placeholder="Введите сообщение..." autocomplete="off" required>
-        <button type="submit">Отправить</button>
-    </form>
-    <p><a href="/">На главную</a></p>
+<script>
+    // Авто-скролл вниз при загрузке
+    const container = document.getElementById('messages-container');
+    if (container) container.scrollTop = container.scrollHeight;
 
-    <script>
-        async function editMessage(btn) {
-            const messageDiv = btn.closest('.message');
-            const originalText = btn.dataset.text;
-            const messageId = btn.dataset.id;
-            const chatId = {{ chat_id }};
+    // Редактирование сообщения (AJAX)
+    async function editMessage(btn) {
+        const messageDiv = btn.closest('.message');
+        const originalText = btn.dataset.text;
+        const messageId = btn.dataset.id;
+        const chatId = {{ chat_id }};
 
-            if (messageDiv.querySelector('.edit-form')) return;
+        if (messageDiv.querySelector('.edit-form')) return;
 
-            const editForm = document.createElement('div');
-            editForm.className = 'edit-form';
-            editForm.innerHTML = `
-                <input type="text" value="${originalText.replace(/"/g, '&quot;')}" style="width: 60%; padding: 4px;">
-                <button onclick="saveEdit(this, ${messageId}, ${chatId})">Сохранить</button>
-                <button onclick="cancelEdit(this)">Отмена</button>
-            `;
-            messageDiv.appendChild(editForm);
-            btn.style.display = 'none';
-        }
+        const editForm = document.createElement('div');
+        editForm.className = 'edit-form mt-2';
+        editForm.innerHTML = `
+            <div class="input-group input-group-sm">
+                <input type="text" class="form-control" value="${originalText.replace(/"/g, '&quot;')}">
+                <button class="btn btn-success btn-sm" onclick="saveEdit(this, ${messageId}, ${chatId})">Сохранить</button>
+                <button class="btn btn-secondary btn-sm" onclick="cancelEdit(this)">Отмена</button>
+            </div>
+        `;
+        messageDiv.appendChild(editForm);
+        btn.style.display = 'none';
+    }
 
-        async function saveEdit(btn, messageId, chatId) {
-            const editForm = btn.closest('.edit-form');
-            const input = editForm.querySelector('input');
-            const newText = input.value.trim();
-            if (!newText) return;
+    async function saveEdit(btn, messageId, chatId) {
+        const editForm = btn.closest('.edit-form');
+        const input = editForm.querySelector('input');
+        const newText = input.value.trim();
+        if (!newText) return;
 
-            const response = await fetch(`/chat/${chatId}/edit_message/${messageId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ new_text: newText })
-            });
+        const response = await fetch(`/chat/${chatId}/edit_message/${messageId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ new_text: newText })
+        });
 
-            if (response.ok) {
-                const messageDiv = editForm.closest('.message');
-                messageDiv.querySelector('.text').innerText = newText;
-                const editBtn = messageDiv.querySelector('.edit-btn');
-                if (editBtn) {
-                    editBtn.dataset.text = newText;
-                    editBtn.style.display = 'inline-block';
-                }
-                editForm.remove();
-            } else {
-                const err = await response.json();
-                alert('Ошибка: ' + (err.error || 'неизвестная ошибка'));
-            }
-        }
-
-        function cancelEdit(btn) {
-            const editForm = btn.closest('.edit-form');
+        if (response.ok) {
             const messageDiv = editForm.closest('.message');
-            editForm.remove();
+            messageDiv.querySelector('.message-text').innerText = newText;
             const editBtn = messageDiv.querySelector('.edit-btn');
-            if (editBtn) editBtn.style.display = 'inline-block';
+            if (editBtn) {
+                editBtn.dataset.text = newText;
+                editBtn.style.display = 'inline-block';
+            }
+            editForm.remove();
+        } else {
+            const err = await response.json();
+            alert('Ошибка: ' + (err.error || 'неизвестная ошибка'));
         }
-    </script>
-</body>
-</html>
+    }
+
+    function cancelEdit(btn) {
+        const editForm = btn.closest('.edit-form');
+        const messageDiv = editForm.closest('.message');
+        editForm.remove();
+        const editBtn = messageDiv.querySelector('.edit-btn');
+        if (editBtn) editBtn.style.display = 'inline-block';
+    }
+
+    // Навешиваем обработчики на кнопки редактирования (после загрузки)
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => editMessage(btn));
+    });
+
+    // Показываем имя выбранного файла (опционально)
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            if (this.files.length) {
+                const label = this.closest('label');
+                if (label) label.innerText = `📎 ${this.files[0].name}`;
+            }
+        });
+    }
+</script>
+
+<style>
+    .message {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+    .message:last-child {
+        border-bottom: none;
+    }
+    .edit-form {
+        margin-left: 20px;
+    }
+    .attachments a {
+        margin-right: 5px;
+    }
+</style>
+{% endblock %}

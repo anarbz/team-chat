@@ -64,14 +64,15 @@ def chat(chat_id):
                 'id': row['id_message'],
                 'user': users_map.get(row['sender_id'], 'Unknown'),
                 'time': row['time'],
-                'message': row['message']
+                'message': row['message'],
             })
 
         return render_template(
             'chat.html',
             messages=messages,
             username=current_user.login,
-            chat_id=chat_id
+            chat_id=chat_id,
+            chat_title=chat_obj.title
         )
 
     finally:
