@@ -6,12 +6,14 @@ from werkzeug.utils import secure_filename
 UPLOAD_FOLDER = "uploads/chats"
 
 def get_chat_upload_dir(chat_id: int) -> str:
-    path = os.path.join(current_app.root_path, UPLOAD_FOLDER, str(chat_id))
+    # Используем корневую директорию приложения
+    base_dir = current_app.root_path
+    path = os.path.join(base_dir, UPLOAD_FOLDER, str(chat_id))
     os.makedirs(path, exist_ok=True)
     return path
 
 def save_uploaded_file(file, chat_id: int) -> dict:
-    if not file:
+    if not file or not file.filename:
         return None
     original_name = secure_filename(file.filename)
     unique_id = uuid.uuid4().hex
@@ -20,6 +22,7 @@ def save_uploaded_file(file, chat_id: int) -> dict:
     upload_dir = get_chat_upload_dir(chat_id)
     stored_path = os.path.join(upload_dir, stored_name)
     file.save(stored_path)
+    print("Сохраняю файл в:", stored_path)
     return {
         'file_name': original_name,
         'file_path': os.path.relpath(stored_path, current_app.root_path).replace("\\", "/"),

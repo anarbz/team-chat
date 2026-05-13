@@ -10,12 +10,11 @@ def save_message(chat_id: int, sender_id: int, text: str, file_info: dict = None
     db_path = get_chat_db_path(chat_id)
     if not db_path or not os.path.exists(db_path):
         return False
-
     try:
         now = datetime.datetime.now()
         with sqlite3.connect(db_path) as conn:
             cursor = conn.cursor()
-
+            # Убедимся, что таблица attachments существует
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS attachments (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,13 +26,11 @@ def save_message(chat_id: int, sender_id: int, text: str, file_info: dict = None
                     FOREIGN KEY (message_id) REFERENCES messages(id_message) ON DELETE CASCADE
                 )
             """)
-
             cursor.execute(
                 "INSERT INTO messages (sender_id, message, time) VALUES (?, ?, ?)",
                 (sender_id, text, now)
             )
             message_id = cursor.lastrowid
-
             if file_info:
                 cursor.execute(
                     """INSERT INTO attachments 

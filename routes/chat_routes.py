@@ -8,6 +8,10 @@ from data.users import User
 from utils.chat_db_utils import get_chat_db_path
 from services.message_operations import save_message, edit_message, delete_message, get_messages_with_attachments, get_message_senders
 from utils.file_utils import save_uploaded_file
+import logging
+
+
+logging.basicConfig(level=logging.DEBUG)
 
 chat_bp = Blueprint('chat', __name__, template_folder='../templates')
 
@@ -27,14 +31,22 @@ def chat(chat_id):
         if not member:
             abort(403, description="Вы не являетесь участником этого чата")
 
+        print("=== Обработка запроса к чату, метод:", request.method)
         if request.method == 'POST':
+            print("=== Это POST-запрос, файлы:", request.files, "формы:", request.form)
             message_text = request.form.get('message', '').strip()
             file = request.files.get('file')
+            print("=== Файл из запроса:", file, "имя:", file.filename if file else "None")
             file_info = None
             if file and file.filename:
-                file_info = save_uploaded_file(file, chat_id)
+                try:
+                    file_info = save_uploaded_file(file, chat_id)
+                    logging.debug(f"Файл сохранён: {file_info}")
+                except Exception as e:
+                    logging.error(f"Ошибка сохранения файла: {e}")
             if message_text or file_info:
-                save_message(chat_id, current_user.id, message_text, file_info)
+                success = save_message(chat_id, current_user.id, message_text, file_info)
+                logging.debug(f"Результат save_message: {success}")
             return redirect(url_for('chat.chat', chat_id=chat_id))
 
         # Получаем сообщения с вложениями

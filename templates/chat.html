@@ -52,15 +52,13 @@
                     {% endif %}
                 </div>
                 <div class="card-footer">
-                    <!-- Форма отправки сообщения с файлом -->
+                    <!-- Форма отправки сообщения с файлом - явно указан enctype -->
                     <form method="post" enctype="multipart/form-data" id="message-form">
                         <div class="mb-2">
                             <textarea class="form-control" name="message" rows="2" placeholder="Введите сообщение..."></textarea>
                         </div>
                         <div class="d-flex gap-2 align-items-center">
-                            <label class="btn btn-outline-secondary btn-sm">
-                                📎 Прикрепить файл <input type="file" name="file" style="display: none;">
-                            </label>
+                            <input type="file" name="file" class="form-control-file" id="fileInput">
                             <button type="submit" class="btn btn-primary">Отправить</button>
                         </div>
                     </form>
@@ -136,17 +134,6 @@
     document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', () => editMessage(btn));
     });
-
-    // Показываем имя выбранного файла (опционально)
-    const fileInput = document.querySelector('input[type="file"]');
-    if (fileInput) {
-        fileInput.addEventListener('change', function() {
-            if (this.files.length) {
-                const label = this.closest('label');
-                if (label) label.innerText = `📎 ${this.files[0].name}`;
-            }
-        });
-    }
 </script>
 
 <style>
