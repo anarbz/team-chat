@@ -1,7 +1,9 @@
 # created by virtualenv automatically
 /.idea
 /.venv
+.venv/
 __pycache__/
 
-#бд
-*.db
+db/*.db
+db/chats/*.db
+uploads/

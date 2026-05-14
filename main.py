@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_login import LoginManager
 from data import db_session
@@ -40,7 +41,8 @@ def load_user(user_id):
 
 def main():
     app = create_app()
-    app.run(port=8080, host='127.0.0.1')
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
 
 
 if __name__ == '__main__':
