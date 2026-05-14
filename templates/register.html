@@ -1,11 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="auth-card">
+{# форма в новом стиле #}
+<div class="auth-card mx-auto">
     <h2>Создать аккаунт</h2>
-    <form action="" method="post" novalidate>
+    <form action="" method="post">
         {{ form.hidden_tag() }}
-        
+
         <p>
             {{ form.login.label }}<br>
             {{ form.login(class="form-control", placeholder="Придумайте никнейм") }}
@@ -42,11 +43,11 @@
             <div class="error-msg">{{ message }}</div>
         {% endif %}
 
-        <p>{{ form.submit(class="btn-primary") }}</p>
-        
-        <p style="text-align: center; font-size: 0.9rem; margin-top: 1rem;">
-            Уже есть аккаунт? <a href="/login" style="color: var(--primary-color);">Войти</a>
-        </p>
+        <p>{{ form.submit(class="btn btn-primary") }}</p>
     </form>
+
+    <p class="text-center mb-0">
+        Уже есть аккаунт? <a href="/login">Войти</a>
+    </p>
 </div>
 {% endblock %}

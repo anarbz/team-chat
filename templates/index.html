@@ -1,66 +1,64 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Вход и регистрация</title>
-    <style>
-        body { font-family: sans-serif; margin: 40px; }
-        .container { display: flex; gap: 40px; }
-        .form-box { border: 1px solid #ccc; padding: 20px; width: 300px; border-radius: 8px; }
-        .form-box h2 { margin-top: 0; }
-        input { width: 100%; margin: 5px 0 10px; padding: 6px; }
-        button { padding: 6px 12px; }
-        .error { color: red; font-size: 0.9em; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="form-box">
-            <h2>Вход</h2>
-            <form method="post">
-                {{ login_form.hidden_tag() }}
-                <p>
-                    {{ login_form.email.label }}<br>
-                    {{ login_form.email() }}
-                </p>
-                <p>
-                    {{ login_form.password.label }}<br>
-                    {{ login_form.password() }}
-                </p>
-                <p>{{ login_form.remember_me() }} {{ login_form.remember_me.label }}</p>
-                <button type="submit" name="login_submit" value="1">Войти</button>
-                {% if message %}
-                    <div class="error">{{ message }}</div>
-                {% endif %}
-            </form>
-        </div>
+{% extends "base.html" %}
 
-        <div class="form-box">
-            <h2>Регистрация</h2>
-            <form method="post">
-                {{ register_form.hidden_tag() }}
-                <p>
-                    {{ register_form.login.label }}<br>
-                    {{ register_form.login() }}
-                </p>
-                <p>
-                    {{ register_form.email.label }}<br>
-                    {{ register_form.email() }}
-                </p>
-                <p>
-                    {{ register_form.password.label }}<br>
-                    {{ register_form.password() }}
-                </p>
-                <p>
-                    {{ register_form.password_again.label }}<br>
-                    {{ register_form.password_again() }}
-                </p>
-                <button type="submit" name="register_submit" value="1">Зарегистрироваться</button>
-                {% if reg_message %}
-                    <div class="error">{{ reg_message }}</div>
-                {% endif %}
-            </form>
-        </div>
+{% block content %}
+{# новые карточки входа #}
+<div class="auth-grid">
+    <div class="auth-card">
+        <h2>Вход</h2>
+        <form method="post">
+            {{ login_form.hidden_tag() }}
+
+            <p>
+                {{ login_form.email.label }}<br>
+                {{ login_form.email(class="form-control", placeholder="email@example.com") }}
+            </p>
+
+            <p>
+                {{ login_form.password.label }}<br>
+                {{ login_form.password(class="form-control", placeholder="Ваш пароль") }}
+            </p>
+
+            <p>{{ login_form.remember_me() }} {{ login_form.remember_me.label }}</p>
+
+            <button class="btn btn-primary" type="submit" name="login_submit" value="1">Войти</button>
+
+            {% if message %}
+                <div class="error-msg mt-3">{{ message }}</div>
+            {% endif %}
+        </form>
     </div>
-</body>
-</html>
+
+    <div class="auth-card">
+        <h2>Регистрация</h2>
+        <form method="post">
+            {{ register_form.hidden_tag() }}
+
+            <p>
+                {{ register_form.login.label }}<br>
+                {{ register_form.login(class="form-control", placeholder="Придумайте никнейм") }}
+            </p>
+
+            <p>
+                {{ register_form.email.label }}<br>
+                {{ register_form.email(class="form-control", placeholder="email@example.com") }}
+            </p>
+
+            <p>
+                {{ register_form.password.label }}<br>
+                {{ register_form.password(class="form-control", placeholder="Надежный пароль") }}
+            </p>
+
+            <p>
+                {{ register_form.password_again.label }}<br>
+                {{ register_form.password_again(class="form-control", placeholder="Повторите пароль") }}
+            </p>
+
+            <button class="btn btn-primary" type="submit" name="register_submit" value="1">Зарегистрироваться</button>
+
+            {% if reg_message %}
+                <div class="error-msg mt-3">{{ reg_message }}</div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+{% endblock %}

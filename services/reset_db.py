@@ -3,7 +3,7 @@ import shutil
 import sys
 
 def reset_all():
-    db_dir = "db"
+    db_dir = "../db"
     chats_dir = os.path.join(db_dir, "chats")
 
     main_db = os.path.join(db_dir, "team_chat.db")

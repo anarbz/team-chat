@@ -1,23 +1,39 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="auth-card">
+{# форма в новом стиле #}
+<div class="auth-card mx-auto">
     <h2>Вход в аккаунт</h2>
     <form action="" method="post">
         {{ form.hidden_tag() }}
-        {{ form.email.label }}<br>
-        {{ form.email(placeholder="email@example.com") }}
-        
-        {{ form.password.label }}<br>
-        {{ form.password(placeholder="Ваш пароль") }}
-        
+
+        <p>
+            {{ form.email.label }}<br>
+            {{ form.email(class="form-control", type="email", placeholder="email@example.com") }}
+            {% for error in form.email.errors %}
+                <div class="error-msg">{{ error }}</div>
+            {% endfor %}
+        </p>
+
+        <p>
+            {{ form.password.label }}<br>
+            {{ form.password(class="form-control", type="password", placeholder="Ваш пароль") }}
+            {% for error in form.password.errors %}
+                <div class="error-msg">{{ error }}</div>
+            {% endfor %}
+        </p>
+
         <p>{{ form.remember_me() }} {{ form.remember_me.label }}</p>
-        
+
         {% if message %}
             <div class="error-msg">{{ message }}</div>
         {% endif %}
-        
-        <p>{{ form.submit(class="btn-primary") }}</p>
+
+        <p>{{ form.submit(class="btn btn-primary") }}</p>
     </form>
+
+    <p class="text-center mb-0">
+        Новый пользователь? <a href="/register">Зарегистрироваться</a>
+    </p>
 </div>
 {% endblock %}
