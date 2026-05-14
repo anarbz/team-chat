@@ -6,7 +6,8 @@ from data import db_session
 from data.chats import Chat
 from data.chat_members import ChatMember
 from utils.chat_db_utils import get_chat_db_path
-from services.message_operations import save_message, edit_message, delete_message, get_messages_with_attachments, get_message_senders
+from services.message_operations import save_message, edit_message, delete_message, get_messages_with_attachments, \
+    get_message_senders
 from utils.file_utils import save_uploaded_file
 
 chat_bp = Blueprint('chat', __name__, template_folder='../templates')
@@ -107,6 +108,7 @@ def delete_message_route(chat_id, message_id):
     if not success:
         return 'Нельзя удалить чужое сообщение', 403
     return redirect(url_for('chat.chat', chat_id=chat_id))
+
 
 @chat_bp.route('/chat/<int:chat_id>/edit_message/<int:message_id>', methods=['POST'])
 @login_required

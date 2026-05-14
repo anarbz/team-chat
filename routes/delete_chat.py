@@ -7,7 +7,6 @@ from data import db_session
 from data.chats import Chat
 from data.chat_members import ChatMember
 
-
 delete_chat_bp = Blueprint('delete_chat', __name__)
 
 

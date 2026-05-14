@@ -11,7 +11,6 @@ dashboard_bp = Blueprint('dashboard', __name__, template_folder='../templates')
 @dashboard_bp.route('/dashboard')
 @login_required
 def dashboard():
-    """список чатов будет добавлен позже ДОБАВЬТЕ ЕГО ГОСПОДИ ИИСУСЕ"""
     return render_template('dashboard.html')
 
 

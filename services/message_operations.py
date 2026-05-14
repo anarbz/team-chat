@@ -143,6 +143,7 @@ def edit_message(chat_id: int, message_id: int, new_text: str, user_id: int) -> 
         print(f"Ошибка редактирования сообщения: {e}")
         return False
 
+
 def delete_message(chat_id: int, message_id: int, user_id: int) -> bool:
     db_path = get_chat_db_path(chat_id)
     if not db_path or not os.path.exists(db_path):

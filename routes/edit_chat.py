@@ -6,7 +6,6 @@ from data.users import User
 from data.chats import Chat
 from data.chat_members import ChatMember
 
-
 edit_chat_bp = Blueprint('edit_chat', __name__)
 
 

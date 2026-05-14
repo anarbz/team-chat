@@ -6,7 +6,6 @@ from data.chats import Chat
 from data.users import User
 from data.chat_members import ChatMember
 
-
 chat_members_bp = Blueprint('chat_members_page', __name__)
 
 

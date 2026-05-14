@@ -1,6 +1,7 @@
 import sqlalchemy
 from .db_session import SqlAlchemyBase
 
+
 # какие пользователи состоят в чате
 class ChatMember(SqlAlchemyBase):
     __tablename__ = 'chat_members'

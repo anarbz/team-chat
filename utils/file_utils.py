@@ -5,10 +5,12 @@ from werkzeug.utils import secure_filename
 
 UPLOAD_FOLDER = "uploads/chats"
 
+
 def get_chat_upload_dir(chat_id: int) -> str:
     path = os.path.join(current_app.root_path, UPLOAD_FOLDER, str(chat_id))
     os.makedirs(path, exist_ok=True)
     return path
+
 
 def save_uploaded_file(file, chat_id: int) -> dict:
     if not file or not file.filename:

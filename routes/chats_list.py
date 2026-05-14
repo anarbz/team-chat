@@ -5,7 +5,6 @@ from data import db_session
 from data.chats import Chat
 from data.chat_members import ChatMember
 
-
 chats_list_bp = Blueprint('chats_list', __name__)
 
 
@@ -24,7 +23,6 @@ def chats():
         user_chats = db_sess.query(Chat).filter(Chat.id.in_(chat_ids)).all()
     else:
         user_chats = []
-
 
     db_sess.close()
 

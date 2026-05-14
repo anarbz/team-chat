@@ -6,6 +6,7 @@ SqlAlchemyBase = orm.declarative_base()
 
 __factory = None
 
+
 # инициализация бд - создание таблиц
 def global_init(db_file):
     global __factory
@@ -20,7 +21,7 @@ def global_init(db_file):
     engine = sa.create_engine(conn_str, echo=False)
     __factory = orm.sessionmaker(bind=engine)
 
-    from . import __all_models #для регистрации моделей
+    from . import __all_models  # для регистрации моделей
 
     SqlAlchemyBase.metadata.create_all(engine)
 
