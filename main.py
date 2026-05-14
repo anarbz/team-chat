@@ -5,7 +5,7 @@ from data import db_session
 from data.users import User
 from routes import (auth_bp, dashboard_bp, enter_bp, chat_bp,
                     chats_list_bp, edit_chat_bp, delete_chat_bp,
-                    chat_members_bp)
+                    chat_members_bp, api_bp)
 
 login_manager = LoginManager()
 
@@ -27,6 +27,7 @@ def create_app():
     app.register_blueprint(edit_chat_bp)
     app.register_blueprint(delete_chat_bp)
     app.register_blueprint(chat_members_bp)
+    app.register_blueprint(api_bp)
 
     return app
 
